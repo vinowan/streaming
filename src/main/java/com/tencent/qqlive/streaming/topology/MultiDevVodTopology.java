@@ -34,7 +34,7 @@ public class MultiDevVodTopology {
 		TopologyBuilder builder = new TopologyBuilder();
 			
 		builder.setSpout("HinaSourceSpout", new HinaSourceSpout(), 4);
-		builder.setBolt("MultiDevVodCountBolt", new MultiDevVodCountBolt(), 1)
+		builder.setBolt("MultiDevVodCountBolt", new MultiDevVodCountBolt(), 2)
 			.fieldsGrouping("HinaSourceSpout", HinaSourceSpout.STREAM_ID_MultDevVod, new Fields("album", "playid", "devtype"));
 		
 		StormSubmitter.submitTopology("MultiDevVod", conf, builder.createTopology());

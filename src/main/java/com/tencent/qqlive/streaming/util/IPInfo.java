@@ -99,17 +99,10 @@ public class IPInfo {
 	 * @param args
 	 */
 	public static void main(String[] args) throws Exception {
-//		IPInfo ipinfo = new IPInfo();
-//		ipinfo.init(Thread.currentThread().getContextClassLoader().getResourceAsStream("a.txt"));
-//		
-//		System.out.println(ipinfo.getIPBlock("14.17.33.232"));
+		IPInfo ipinfo = new IPInfo();
+		ipinfo.init(Thread.currentThread().getContextClassLoader().getResourceAsStream("a.txt"));
 		
-		BufferedReader reader = new BufferedReader(new FileReader("d:/file.txt"));
-		String line = null;
-		
-		while((line = reader.readLine()) != null) {
-			System.out.println(line);
-		}
+		System.out.println(ipinfo.getIPBlock("14.17.33.232"));
 	}
 
 }

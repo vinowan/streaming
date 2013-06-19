@@ -126,7 +126,7 @@ public class HinaSourceSpout implements IRichSpout {
 								dbPassword);
 						Statement statement = conn.createStatement();
 						ResultSet rs = statement
-								.executeQuery("SELECT DISTINCT c_data6 FROM d_live_manage.t_live_comm_dzd WHERE CHAR_LENGTH(c_data5) = 11;");
+								.executeQuery("SELECT DISTINCT c_data6 FROM d_live_manage.t_live_comm_dzd WHERE CHAR_LENGTH(c_data6) = 11;");
 
 						StringBuilder sb = new StringBuilder();
 						int count = 0;
