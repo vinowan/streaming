@@ -40,7 +40,9 @@ public class Utils {
 	
 	public static long inetAddrToLong(InetAddress addr) {
 		byte[] bytes = addr.getAddress();
-		return (bytes[3] & 0xff) | (bytes[2]<<8 & 0xff00) 
-				| (bytes[1]<<16 & 0xff0000) | (bytes[0]<<24 & 0xff000000);
+		return ((((long) bytes[ 0] & 0xff) << 24) 
+	               | (((long) bytes[ 1] & 0xff) << 16) 
+	               | (((long) bytes[ 2] & 0xff) << 8) 
+	               | (((long) bytes[ 3] & 0xff) << 0)); 
 	}
 }
