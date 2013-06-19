@@ -22,7 +22,7 @@ import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.tuple.Tuple;
 
 import com.tencent.qqlive.streaming.spout.LogEntry;
-import com.tencent.qqlive.streaming.util.StringUtils;
+import com.tencent.qqlive.streaming.util.Utils;
 import com.tencent.qqlive.streaming.util.ZkClient;
 
 public class MultiDevVodCountBolt implements IRichBolt {
@@ -144,14 +144,14 @@ public class MultiDevVodCountBolt implements IRichBolt {
 						results.clear();
 						conn.close();
 					} catch (SQLException e) {
-						logger.error("failed to execute sql: " + StringUtils.stringifyException(e));
+						logger.error("failed to execute sql: " + Utils.stringifyException(e));
 					}
 				}
 							
 			}, initialDelay, Integer.valueOf(writeIntervalStr), TimeUnit.SECONDS);
 			
 		} catch (Exception e) {
-			logger.error("failed to open bolt: " + StringUtils.stringifyException(e));
+			logger.error("failed to open bolt: " + Utils.stringifyException(e));
 		}
 	}
 

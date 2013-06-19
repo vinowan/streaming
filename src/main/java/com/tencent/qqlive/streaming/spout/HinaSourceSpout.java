@@ -31,7 +31,7 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
 
 import com.tencent.qqlive.streaming.util.Config;
-import com.tencent.qqlive.streaming.util.StringUtils;
+import com.tencent.qqlive.streaming.util.Utils;
 import com.tencent.qqlive.streaming.util.ZkClient;
 
 public class HinaSourceSpout implements IRichSpout {
@@ -126,7 +126,7 @@ public class HinaSourceSpout implements IRichSpout {
 								dbPassword);
 						Statement statement = conn.createStatement();
 						ResultSet rs = statement
-								.executeQuery("SELECT DISTINCT c_data5 FROM d_live_manage.t_live_comm_dzd WHERE CHAR_LENGTH(c_data5) = 11;");
+								.executeQuery("SELECT DISTINCT c_data6 FROM d_live_manage.t_live_comm_dzd WHERE CHAR_LENGTH(c_data5) = 11;");
 
 						StringBuilder sb = new StringBuilder();
 						int count = 0;
@@ -142,7 +142,7 @@ public class HinaSourceSpout implements IRichSpout {
 						conn.close();
 					} catch (SQLException e) {
 						logger.error("failed to execute sql: "
-								+ StringUtils.stringifyException(e));
+								+ Utils.stringifyException(e));
 					}
 
 					playIdsRef.set(ids);
@@ -167,7 +167,7 @@ public class HinaSourceSpout implements IRichSpout {
 					+ Config.SPOUT_REGISTER_PATH);
 		} catch (Exception e) {
 			logger.error("failed to open spout: "
-					+ StringUtils.stringifyException(e));
+					+ Utils.stringifyException(e));
 			// e.printStackTrace();
 		}
 	}
@@ -240,7 +240,7 @@ public class HinaSourceSpout implements IRichSpout {
 			date = formatter.parse(timestamp);
 		} catch (ParseException e) {
 			logger.warn("failed to parse timestamp: "
-					+ StringUtils.stringifyException(e));
+					+ Utils.stringifyException(e));
 			return null;
 		}
 		entry.setTimestamp(date.getTime());

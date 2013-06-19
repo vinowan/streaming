@@ -27,7 +27,7 @@ public class Config {
 			try {
 				prop.load(new StringReader(conf));
 			} catch (IOException e) {
-				logger.error("failed to load conf: " + conf + "\n" + StringUtils.stringifyException(e));
+				logger.error("failed to load conf: " + conf + "\n" + Utils.stringifyException(e));
 				return null;
 			}
 		}
