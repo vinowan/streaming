@@ -1,5 +1,10 @@
 package com.tencent.qqlive.streaming.util;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
 import org.apache.zookeeper.CreateMode;
@@ -90,5 +95,38 @@ public class ZkClient implements Watcher {
 		sb.append("}");
 		
 		return sb.toString();
+	}
+	
+	public static void main(String[] args) throws Exception {
+		Properties prop = new Properties();
+		try {
+			prop.load(Thread.currentThread().
+					getContextClassLoader().getResourceAsStream(args[0]));
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(-1);
+		}
+		
+		ZkClient zkc = new ZkClient((String)prop.get("zk.host"));
+		BufferedReader reader = null;
+		StringBuilder sb = new StringBuilder();
+		try {
+			reader = new BufferedReader(new FileReader(args[1]));
+			String line = null;
+			while((line = reader.readLine()) != null) {
+				sb.append(line);
+				sb.append("\n");
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			System.exit(-1);
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(-1);
+		}
+		
+		zkc.connect();
+		zkc.writeConf("/test-streaming/conf/stream", sb.toString());
+		zkc.disconnect();
 	}
 }

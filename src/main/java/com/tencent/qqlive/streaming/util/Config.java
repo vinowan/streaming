@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 public class Config {
 	private static final Logger logger = LoggerFactory.getLogger(Config.class);
 	
-	// 相对zk.path的路径
 	public static final String CONFIG_FILE_PATH = "/conf/stream";
 	public static final String SPOUT_REGISTER_PATH = "/spout";
 	

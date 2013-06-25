@@ -42,7 +42,21 @@ public class IPInfo {
 	
 	private NavigableMap<Long, IPBlockInfo> ipBlocks = new TreeMap<Long, IPBlockInfo>();
 	
-	public boolean init(InputStream input) {
+	private static IPInfo ipInfo = null;
+	
+	public static IPInfo getInstance() {
+		if (ipInfo == null) {
+			ipInfo = new IPInfo();
+			
+			boolean ret = ipInfo.init(Thread.currentThread().getContextClassLoader().getResourceAsStream("ip.txt"));
+			if (!ret)
+				return null;
+		}
+		
+		return ipInfo;
+	}
+	
+	private boolean init(InputStream input) {
 		ipBlocks.clear();
 		
 		BufferedReader reader = null;
@@ -76,7 +90,6 @@ public class IPInfo {
 	}
 	
 	public IPBlockInfo getIPBlock(long ip) {
-		System.out.println("long: " + ip);
 		Map.Entry<Long, IPBlockInfo> entry = ipBlocks.floorEntry(ip);
 		if (entry == null)
 			return null;

@@ -45,4 +45,52 @@ public class Utils {
 	               | (((long) bytes[ 2] & 0xff) << 8) 
 	               | (((long) bytes[ 3] & 0xff) << 0)); 
 	}
+	
+	public static Integer isNumeric(String value) {
+		Integer ret = null;
+		
+		try {
+			ret = Integer.valueOf(value);
+		} catch (NumberFormatException e) {
+			return null;
+		}
+		
+		return ret;
+	}
+	
+	public static String getHostByUrl(String url) {
+		if (!url.startsWith("http://")) {
+			return url;
+		} else {
+			int bIdx = url.indexOf("http://");
+			int eIdx = url.indexOf("/", bIdx + 8);
+			
+			return url.substring(bIdx + 8, eIdx);
+		}
+	}
+	
+	public static String getProgVid(String url) {
+		int eIdx = url.indexOf("?");
+		if (eIdx == -1)
+			eIdx = url.length();
+		
+		int bIdx = url.lastIndexOf("/", eIdx);
+		if (bIdx == -1)
+			bIdx = 0;
+		
+		return url.substring(bIdx + 1, eIdx);
+	}
+	
+	public static String getURLVKey(String url) {
+		int eIdx = url.indexOf("?");
+		if (eIdx == -1)
+			eIdx = url.length();
+		
+		return url.substring(0, eIdx);
+	}
+	
+	public static void main(String[] args) {
+		String url = "http://218.108.149.233/vkp.tc.qq.com/r0012wt0gdl.p202.1.mp4";
+		System.out.println(getURLVKey(url));
+	}
 }
