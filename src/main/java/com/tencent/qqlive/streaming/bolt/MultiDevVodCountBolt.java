@@ -21,7 +21,7 @@ import backtype.storm.topology.IRichBolt;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.tuple.Tuple;
 
-import com.tencent.qqlive.streaming.spout.LogEntry;
+import com.tencent.qqlive.streaming.dao.LogEntry;
 import com.tencent.qqlive.streaming.util.Utils;
 import com.tencent.qqlive.streaming.util.ZkClient;
 

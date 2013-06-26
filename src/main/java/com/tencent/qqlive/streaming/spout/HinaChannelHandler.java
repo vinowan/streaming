@@ -45,24 +45,29 @@ public class HinaChannelHandler extends SimpleChannelUpstreamHandler {
 		byte[] propertyByte = Arrays.copyOfRange(rawMessage, bodyIndex + 1,
 				rawMessage.length - 1);
 		
-		Map<String, String> properties = getPropertyMap(propertyByte);
+		String category = getEventCategory(propertyByte);
+		if (category == null) {
+			statics.noCategory.getAndIncrement();
+			return;
+		}
 
-		if(!messageQueue.offer(new HinaEvent(eventByte, properties))) {
+		if(!messageQueue.offer(new HinaEvent(eventByte, category))) {
 			statics.queueFull.getAndIncrement();
 		}
 	}
 	
-	private Map<String, String> getPropertyMap(byte[] propertysByte) {
+	private String getEventCategory(byte[] propertysByte) {
 		String propertys = new String(propertysByte);
 		String[] aProperty = propertys.split(",");
-		Map<String, String> maps = new HashMap<String, String>();
+		
+		String category = null;
 		for (String p : aProperty) {
 			String[] keyValues = p.split(":");
-			if (keyValues.length == 2) {
-				maps.put(keyValues[0].trim(), keyValues[1].trim());
+			if (keyValues.length == 2 && keyValues[0].trim().equals("category")) {
+				category = keyValues[1].trim();
 			}
 		}
-		return maps;
+		return category;
 	}
 	
 	private int searchIndex(byte[] bytes, byte key) {

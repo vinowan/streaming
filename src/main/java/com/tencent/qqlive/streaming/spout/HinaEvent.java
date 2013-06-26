@@ -1,14 +1,12 @@
 package com.tencent.qqlive.streaming.spout;
 
-import java.util.Map;
-
 public class HinaEvent {
 	private byte[] body = null;
-	private Map<String, String> properties = null;
-	
-	public HinaEvent(byte[] body, Map<String, String> properties) {
+	private String category = null;
+
+	public HinaEvent(byte[] body, String category) {
 		this.body = body;
-		this.properties = properties;
+		this.category = category;
 	}
 	
 	public byte[] getBody() {
@@ -19,11 +17,11 @@ public class HinaEvent {
 		this.body = body;
 	}
 	
-	public Map<String, String> getProperties() {
-		return properties;
+	public String getCategory() {
+		return category;
 	}
-	
-	public void setProperties(Map<String, String> properties) {
-		this.properties = properties;
+
+	public void setCategory(String category) {
+		this.category = category;
 	}
 }

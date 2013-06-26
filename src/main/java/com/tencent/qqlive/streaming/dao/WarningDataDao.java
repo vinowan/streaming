@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class WarningDataDao {
-	private static final Logger logger = LoggerFactory.getLogger(WarningConfigDAO.class);
+	private static final Logger logger = LoggerFactory.getLogger(WarningConfigDao.class);
 	
 	private Connection conn = null;
 

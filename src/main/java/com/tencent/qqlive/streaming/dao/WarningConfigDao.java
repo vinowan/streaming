@@ -14,12 +14,12 @@ import org.slf4j.LoggerFactory;
 
 import com.tencent.qqlive.streaming.util.Utils;
 
-public class WarningConfigDAO {
-	private static final Logger logger = LoggerFactory.getLogger(WarningConfigDAO.class);
+public class WarningConfigDao {
+	private static final Logger logger = LoggerFactory.getLogger(WarningConfigDao.class);
 	
 	private Connection conn = null;
 	
-	public WarningConfigDAO(Connection conn) {
+	public WarningConfigDao(Connection conn) {
 		this.conn = conn;
 	}
 	
@@ -40,7 +40,17 @@ public class WarningConfigDAO {
 		return retList;
 	}
 	
-	public Map<Integer, WarningRule> getWarningRuleForStatsFile(String file) throws SQLException {
+	public FileRule getRuleForFile(String file) throws SQLException {
+		FileRule result = new FileRule();
+		
+		result.setWarningRules(getItemRuleForFile(file));
+		result.setLatitudeRules(getLatitudeRuleForFile(file));
+		result.getExprs(); // eagerly init
+		
+		return result;
+	}
+	
+	public Map<Integer, ItemRule> getItemRuleForFile(String file) throws SQLException {
 		Statement statement = conn.createStatement();
 //		statement.executeUpdate("set names gbk");
 		
@@ -50,10 +60,10 @@ public class WarningConfigDAO {
 		
 		ResultSet rs = statement.executeQuery(sql);
 		
-		Map<Integer, WarningRule> result = new HashMap<Integer, WarningRule>();
+		Map<Integer, ItemRule> result = new HashMap<Integer, ItemRule>();
 		while(rs.next()) {
 			try {
-				WarningRule wr = new WarningRule();
+				ItemRule wr = new ItemRule();
 				
 				int itilID = rs.getInt(1);
 				wr.setItilID(itilID);
@@ -106,7 +116,7 @@ public class WarningConfigDAO {
 		return result;
 	}
 	
-	public List<LatitudeRule> getLatitudeRuleForStatsFile(String file) throws SQLException {
+	public List<LatitudeRule> getLatitudeRuleForFile(String file) throws SQLException {
 		Statement statement = conn.createStatement();
 //		statement.executeUpdate("set names gbk");
 		

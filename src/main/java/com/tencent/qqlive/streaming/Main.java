@@ -1,9 +1,11 @@
 package com.tencent.qqlive.streaming;
 
 import java.sql.Connection;
+import java.util.Set;
 
 import com.tencent.qqlive.streaming.dao.DatabaseConnection;
-import com.tencent.qqlive.streaming.dao.WarningDataDao;
+import com.tencent.qqlive.streaming.dao.FileRule;
+import com.tencent.qqlive.streaming.dao.WarningConfigDao;
 
 
 public class Main {
@@ -12,8 +14,11 @@ public class Main {
 //		DatabaseConnection dbConn = new DatabaseConnection("10.130.2.16", "3306", "p2p", "!@#$qwerASDFzxcv");
 		Connection conn = dbConn.getConn();
 		
-		WarningDataDao wdd = new WarningDataDao(conn);
-		
-		wdd.insertEMailWarning(System.currentTimeMillis(), 1, "1", "catgory", "value", 1.1, 2.2, "[1,100]", 10);
+		WarningConfigDao wcd = new WarningConfigDao(conn);
+		FileRule fr = wcd.getRuleForFile("tptsvr.exe_51.log.mobile");
+		Set<String> exprs = fr.getExprs();
+		for (String expr : exprs) {
+			System.out.println("expr: " + expr);
+		}
 	}
 }

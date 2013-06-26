@@ -1,9 +1,11 @@
 package com.tencent.qqlive.streaming.dao;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-public class WarningRule {
+public class ItemRule {
 	public static final int COMPARE_TYPE_LAGRGER = 1; //>=
 	public static final int COMPREA_TYPE_SMALLER = 2; //<=
 	public static final int COMPARE_TYPE_NOT_EQUAL = 3; //!= 
@@ -14,7 +16,7 @@ public class WarningRule {
 	
 	private int itilID = 0;
 	private String itemName = null;
-	private ElementaryArithmetic ArithExpr = null;
+	private ElementaryArithmetic arithExpr = null;
 	private double motion = 0.0;
 	private Map<String, ItemRange> itemRanges = null;
 	private int compareType = 0; // ∂‘”¶COMPARE_TYPE_LAGRGER
@@ -40,10 +42,10 @@ public class WarningRule {
 		this.itemName = itemName;
 	}
 	public ElementaryArithmetic getArithExpr() {
-		return ArithExpr;
+		return arithExpr;
 	}
 	public void setArithExpr(ElementaryArithmetic arithExpr) {
-		ArithExpr = arithExpr;
+		this.arithExpr = arithExpr;
 	}
 	public double getMotion() {
 		return motion;
@@ -110,5 +112,33 @@ public class WarningRule {
 	}
 	public void setMaxWarnCount(int maxWarnCount) {
 		this.maxWarnCount = maxWarnCount;
+	}
+	
+	public Set<String> getExpression() {
+		Set<String> result = new HashSet<String>();
+		
+		if (arithExpr != null) {
+			result.addAll(arithExpr.getExpression());
+		}
+		
+		if (fieldRelations != null) {
+			for (FieldRelation relation : fieldRelations) {
+				result.add(relation.getItem());
+			}
+		}
+		
+		return result;
+	}
+	
+	public boolean validate(LogEntry entry) {
+		for (FieldRelation relation : fieldRelations) {
+			String value = entry.getFields().get(relation.getItem());
+			if (value == null)
+				return false;
+			
+			if (!relation.validate(value))
+				return false;
+		}
+		return true;
 	}
 }

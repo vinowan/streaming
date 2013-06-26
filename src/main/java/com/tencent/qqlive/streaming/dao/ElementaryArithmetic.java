@@ -2,104 +2,20 @@ package com.tencent.qqlive.streaming.dao;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 
 public class ElementaryArithmetic {
-	static class Operator implements Comparable<Operator> {
-		private final char token;
-		private final int  priority;
-		
-		public Operator(char token, int priority) {
-			this.token = token;
-			this.priority = priority;
-		}
-		
-		public double calc(double lhs, double rhs) {
-			double ret = 0;
-			
-			switch (token) {
-			case '+':
-				ret = lhs + rhs;
-				break;
-			case '-':
-				ret = lhs - rhs;
-				break;
-			case '*':
-				ret = lhs * rhs;
-				break;
-			case '/':
-				ret = lhs / rhs;
-				break;
-			case ')':
-			case '(':
-			default:
-				ret = 0;
-			}
-			
-			return ret;
-		}
-		
-		public int compareTo(Operator o) {
-			return priority - o.priority;
-		}
-		
-		@Override
-		public boolean equals(Object obj) {
-			if (obj instanceof Operator) {
-				Operator oper = (Operator)obj;
-				return token == oper.token;
-			}
-			
-			return false;
-		}
-		
-		@Override
-		public String toString() {
-			return String.valueOf(token);
-		}
-		
-		public static Operator valueOf(String oper) {
-			if (oper.equals(")")) {
-				return RIGHT_BRACKES;
-			} else if (oper.equals("+")) {
-				return ADD_OPERATOR;
-			} else if (oper.equals("-")) {
-				return SUB_OPERATOR;
-			} else if (oper.equals("*")) {
-				return MUL_OPERATOR;
-			} else if (oper.equals("/")) {
-				return DIV_OPERATOR;
-			} else if (oper.equals("(")) {
-				return LEFT_BRACKES;
-			} else {
-				return null;
-			}
-		}
-		
-		public static boolean isOperator(char c) {
-			switch (c) {
-			case ')':
-			case '+':
-			case '-':
-			case '*':
-			case '/':
-			case '(':
-				return true;
-			default:
-				return false;
-			}
-		}
- 	}
-	
-	private static final Operator LEFT_BRACKES = new Operator('(', 0);
-	private static final Operator RIGHT_BRACKES = new Operator(')', 0);
-	private static final Operator ADD_OPERATOR = new Operator('+', 1);
-	private static final Operator SUB_OPERATOR = new Operator('-', 1);
-	private static final Operator MUL_OPERATOR = new Operator('*', 2);
-	private static final Operator DIV_OPERATOR = new Operator('/', 2);
+	static final Operator LEFT_BRACKES = new Operator('(', 0);
+	static final Operator RIGHT_BRACKES = new Operator(')', 0);
+	static final Operator ADD_OPERATOR = new Operator('+', 1);
+	static final Operator SUB_OPERATOR = new Operator('-', 1);
+	static final Operator MUL_OPERATOR = new Operator('*', 2);
+	static final Operator DIV_OPERATOR = new Operator('/', 2);
 	
 	
 	private List<String> infixNotation = null;
@@ -151,6 +67,23 @@ public class ElementaryArithmetic {
 		}
 		
 		return sb.toString();
+	}
+	
+	public Set<String> getExpression() {
+		Set<String> result = new HashSet<String>();
+		
+		for (String token : infixNotation) {
+			Operator oper = Operator.valueOf(token);
+			if (oper == null) {
+				if (token.startsWith("[") && token.endsWith("]")) {
+					token = token.substring(1, token.length() - 1);
+				}
+				
+				result.add(token);
+			}
+		}
+		
+		return result;
 	}
 	
 	private List<String> tokenizer(String expression) {
@@ -220,11 +153,9 @@ public class ElementaryArithmetic {
 	public static void main(String[] args) {
 		ElementaryArithmetic ea = new ElementaryArithmetic("(hspeed + uspeed) / [hspeed]");
 		
-		Map<String, Double> values = new HashMap<String, Double>();	
-		values.put("hspeed", 1.0);
-		values.put("uspeed", 2.0);
-		values.put("[hspeed]", 1.5);
-		
-		System.out.println(ea.calcResult(values));
+		Set<String> exprs = ea.getExpression();
+		for(String expr : exprs) {
+			System.out.println(expr);
+		}
 	}
 }
