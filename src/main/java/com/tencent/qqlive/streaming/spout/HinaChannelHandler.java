@@ -1,8 +1,6 @@
 package com.tencent.qqlive.streaming.spout;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -63,7 +61,7 @@ public class HinaChannelHandler extends SimpleChannelUpstreamHandler {
 		String category = null;
 		for (String p : aProperty) {
 			String[] keyValues = p.split(":");
-			if (keyValues.length == 2 && keyValues[0].trim().equals("category")) {
+			if (keyValues.length == 2 && keyValues[0].trim().equals(EVENT_KEY_NAME)) {
 				category = keyValues[1].trim();
 			}
 		}

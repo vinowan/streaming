@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class ElementaryArithmetic {
 	static final Operator LEFT_BRACKES = new Operator('(', 0);
@@ -20,13 +21,36 @@ public class ElementaryArithmetic {
 	
 	private List<String> infixNotation = null;
 	private List<String> postfixNotation = null;
+	
+	// token -> Operand, 函数compute和calcResult被不同的线程调用
+	private AtomicReference<HashMap<String, Operand>> operandsRef = new AtomicReference<HashMap<String, Operand>>();
 		
 	public ElementaryArithmetic(String expression) {
 		infixNotation = tokenizer(expression);
 		postfixNotation = toPostfix(infixNotation);
+		
+		resetOperands();
 	}
 	
-	public double calcResult(Map<String, Double> values) {
+	public void compute(Map<String, String> itemValues) {
+		for (Map.Entry<String, Operand> entry : operandsRef.get().entrySet()) {
+			String name = entry.getKey();
+			if (name.startsWith("[") && name.endsWith("]"))
+				name = name.substring(1, name.length() - 1);
+			
+			String value = itemValues.get(name);
+			if (value == null)
+				continue;
+			
+			// 表达式中的值都认为是Long类型
+			entry.getValue().compute(Long.valueOf(value));
+			System.out.println(entry.getKey() + ":" + entry.getValue().getValue());
+		}
+	}
+	
+	public double calcResult() {
+		HashMap<String, Operand> operands = resetOperands();
+		
 		Stack<Double> resultStack = new Stack<Double>();
 		
 		Iterator<String> it = postfixNotation.iterator();
@@ -34,11 +58,11 @@ public class ElementaryArithmetic {
 			String notation = it.next();
 			Operator oper = Operator.valueOf(notation);
 			if (oper == null) {
-				Double val = values.get(notation);
+				Operand val = operands.get(notation);
 				if (val == null) {
 					resultStack.push(0.0);
 				} else {
-					resultStack.push(val);
+					resultStack.push((double)val.getValue());
 				}
 			} else {
 				double rhs = resultStack.pop();
@@ -49,24 +73,6 @@ public class ElementaryArithmetic {
 		}
 		
 		return resultStack.pop();
-	}
-	
-	public String getInfixNotation() {
-		StringBuilder sb = new StringBuilder();
-		for (String notation : infixNotation) {
-			sb.append(notation);
-		}
-		
-		return sb.toString();
-	}
-	
-	public String getPostfixNotation() {
-		StringBuilder sb = new StringBuilder();
-		for (String notation : postfixNotation) {
-			sb.append(notation);
-		}
-		
-		return sb.toString();
 	}
 	
 	public Set<String> getExpression() {
@@ -150,12 +156,37 @@ public class ElementaryArithmetic {
 		return ret;
 	}
 	
+	private HashMap<String, Operand> resetOperands() {
+		HashMap<String, Operand> operands = new HashMap<String, Operand>();
+		for (String token : infixNotation) {
+			Operator oper = Operator.valueOf(token);
+			if (oper == null) {
+				operands.put(token, new Operand(token));
+			}
+		}
+		
+		return operandsRef.getAndSet(operands);
+	}
+	
 	public static void main(String[] args) {
 		ElementaryArithmetic ea = new ElementaryArithmetic("(hspeed + uspeed) / [hspeed]");
 		
-		Set<String> exprs = ea.getExpression();
-		for(String expr : exprs) {
-			System.out.println(expr);
-		}
+		Map<String, String> itemValues = new HashMap<String, String>();
+		itemValues.put("hspeed", "2");
+		itemValues.put("uspeed", "1");
+		ea.compute(itemValues);
+		
+		itemValues.clear();
+		itemValues.put("hspeed", "3");
+		itemValues.put("uspeed", "2");
+		ea.compute(itemValues);
+		
+		System.out.println(ea.calcResult());
+		
+		itemValues.clear();
+		itemValues.put("hspeed", "3");
+		itemValues.put("uspeed", "2");
+		ea.compute(itemValues);
+		System.out.println(ea.calcResult());
 	}
 }

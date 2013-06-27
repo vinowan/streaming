@@ -2,8 +2,16 @@ package com.tencent.qqlive.streaming.bolt;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-public class BoltStatics {
+import com.tencent.qqlive.streaming.util.ComponentStats;
+
+public class BoltStatics extends ComponentStats{
 	public AtomicLong inPacket = new AtomicLong();
+	
+	private String name = null;
+	
+	public BoltStatics(String name) {
+		this.name = name;
+	}
 	
 	public String toStr() {
 		StringBuilder sb = new StringBuilder();
@@ -13,5 +21,10 @@ public class BoltStatics {
 	
 	public void reset() {
 		inPacket.set(0);
+	}
+
+	@Override
+	public String getComponentName() {
+		return name;
 	}
 }

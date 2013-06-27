@@ -24,7 +24,6 @@ import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.IRichSpout;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.tuple.Fields;
-import backtype.storm.tuple.Tuple;
 
 import com.tencent.qqlive.streaming.dao.DatabaseConnection;
 import com.tencent.qqlive.streaming.dao.FileRule;
@@ -36,6 +35,8 @@ import com.tencent.qqlive.streaming.util.Utils;
 import com.tencent.qqlive.streaming.util.ZkClient;
 
 public class CollectorSpout implements IRichSpout {
+	private static final long serialVersionUID = -2740279769470414180L;
+	
 	public static final String COMPONENT_NAME = "CollectorSpout";
 	private static final String SPOUT_REGISTER_PATH = "/spout";
 	
@@ -46,8 +47,6 @@ public class CollectorSpout implements IRichSpout {
 			100000);
 
 	private SpoutOutputCollector collector = null;
-	private Map conf = null;
-	private TopologyContext context = null;
 
 	private HinaSourceServer server = null;
 	private ZkClient zkc = null;
@@ -100,8 +99,6 @@ public class CollectorSpout implements IRichSpout {
 	public void open(Map conf, TopologyContext context,
 			SpoutOutputCollector collector) {
 		this.collector = collector;
-		this.conf = conf;
-		this.context = context;
 		
 		executor = Executors.newSingleThreadScheduledExecutor();
 		
@@ -118,14 +115,14 @@ public class CollectorSpout implements IRichSpout {
 		dbUser = (String) conf.get("db.user");
 		dbPwd = (String) conf.get("db.password");
 		
-//		int reloadInterval = Integer.valueOf((String)conf.get("reload.interval"));
-		int reloadInterval = Config.getInt(conf, "reload.interval", 300);
-		
 		if (dbHost == null || dbPort == null || dbUser == null
 				|| dbPwd == null)
 			throw new RuntimeException("failed to load db config");
 		
 		latch = new CountDownLatch(1);
+		
+//		int reloadInterval = Integer.valueOf((String)conf.get("reload.interval"));
+		int reloadInterval = Config.getInt(conf, "reload.interval", 300);
 		
 		executor.scheduleAtFixedRate(new DBConfigUpdater(), 0, reloadInterval, TimeUnit.SECONDS);
 		logger.info("waiting for load config from database: " + dbHost);
@@ -208,6 +205,7 @@ public class CollectorSpout implements IRichSpout {
 		for (Map.Entry<Integer, ItemRule> entry : fr.getWarningRules().entrySet()) {
 			if (entry.getValue().validate(log)) {
 				List<Object> tuple = new ArrayList<Object>();
+				// first item is itil id
 				tuple.add(entry.getKey());
 				
 				for (Map.Entry<String, String> field : log.getFields().entrySet()) {
@@ -215,6 +213,7 @@ public class CollectorSpout implements IRichSpout {
 				}
 				
 				collector.emit(log.getCategory(), tuple);
+				statics.incr(log.getCategory());				
 			}
 		}
 	}

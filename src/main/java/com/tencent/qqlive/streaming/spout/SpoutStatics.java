@@ -1,5 +1,7 @@
 package com.tencent.qqlive.streaming.spout;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.tencent.qqlive.streaming.util.ComponentStats;
@@ -10,13 +12,24 @@ public class SpoutStatics extends ComponentStats {
 	public AtomicLong handlePacket = new AtomicLong();
 	public AtomicLong wrongStreamPacket = new AtomicLong();
 	public AtomicLong timeoutPacket = new AtomicLong();
-	public AtomicLong emitPacket = new AtomicLong();
 	public AtomicLong noCategory = new AtomicLong();
+	
+	private Map<String, AtomicLong> emitStream = new HashMap<String, AtomicLong>();
 	
 	private String componentName = null;
 	
 	public SpoutStatics(String componentName) {
 		this.componentName = componentName;
+	}
+	
+	public void incr(String stream) {
+		AtomicLong stats = emitStream.get(stream);
+		if (stats == null) {
+			stats = new AtomicLong(0);
+			emitStream.put(stream, stats);
+		}
+		
+		stats.incrementAndGet();
 	}
 	
 	@Override
@@ -32,10 +45,13 @@ public class SpoutStatics extends ComponentStats {
 		sb.append("\n");
 		sb.append("timeoutPacket: " + timeoutPacket.get());
 		sb.append("\n");
-		sb.append("emitPacket: " + emitPacket.get());
-		sb.append("\n");
 		sb.append("noCategory: " + noCategory.get());
 		sb.append("\n");
+		
+		for (Map.Entry<String, AtomicLong> entry : emitStream.entrySet()) {
+			sb.append(entry.getKey() + ": " + entry.getValue().get());
+			sb.append("\n");
+		}
 		
 		return sb.toString();
 	}
@@ -47,8 +63,11 @@ public class SpoutStatics extends ComponentStats {
 		handlePacket.set(0);
 		wrongStreamPacket.set(0);
 		timeoutPacket.set(0);
-		emitPacket.set(0);
 		noCategory.set(0);
+		
+		for (Map.Entry<String, AtomicLong> entry : emitStream.entrySet()) {
+			entry.getValue().set(0);
+		}
 	}
 
 	@Override
