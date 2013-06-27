@@ -44,13 +44,14 @@ public class HinaSourceSpout implements IRichSpout {
 			100000);
 
 	private AtomicReference<HashSet<String>> playIdsRef = new AtomicReference<HashSet<String>>();
+	private AtomicReference<HashSet<String>> albumIdsRef = new AtomicReference<HashSet<String>>();
 
 	private CountDownLatch latch = null;
 
 	private SpoutOutputCollector collector = null;
 	private Map conf = null;
 	private TopologyContext context = null;
-	
+
 	private HinaSourceServer server = null;
 	private ZkClient zkc = null;
 	private Connection conn = null;
@@ -63,7 +64,7 @@ public class HinaSourceSpout implements IRichSpout {
 	private String dbPort = null;
 	private String dbUser = null;
 	private String dbPassword = null;
-	
+
 	private SpoutStatics statics = null;
 
 	public void open(Map conf, TopologyContext context,
@@ -71,9 +72,9 @@ public class HinaSourceSpout implements IRichSpout {
 		this.collector = collector;
 		this.conf = conf;
 		this.context = context;
-		
+
 		statics = new SpoutStatics();
-		
+
 		String zkHost = (String) conf.get("zk.host");
 		String zkPath = (String) conf.get("zk.path");
 		String reloadIntervalStr = (String) conf.get("reload.interval");
@@ -103,12 +104,13 @@ public class HinaSourceSpout implements IRichSpout {
 			executor.scheduleAtFixedRate(new Runnable() {
 
 				public void run() {
-					
-					logger.info("Spout Statics: " + HinaSourceSpout.this.context.getThisTaskId());
+
+					logger.info("Spout Statics: "
+							+ HinaSourceSpout.this.context.getThisTaskId());
 					logger.info(statics.toStr());
-					
-					statics.reset();				
-					
+
+					statics.reset();
+
 					// connect to db
 					String dbUrl = String.format("jdbc:mysql://%s:%s/", dbHost,
 							dbPort);
@@ -119,34 +121,53 @@ public class HinaSourceSpout implements IRichSpout {
 								"failed to load mysql jdbc driver");
 					}
 
-					HashSet<String> ids = new HashSet<String>();
+					HashSet<String> playIds = new HashSet<String>();
+					HashSet<String> albumIds = new HashSet<String>();
 
 					try {
 						conn = DriverManager.getConnection(dbUrl, dbUser,
 								dbPassword);
 						Statement statement = conn.createStatement();
-						ResultSet rs = statement
-								.executeQuery("SELECT DISTINCT c_data6 FROM d_live_manage.t_live_comm_dzd WHERE CHAR_LENGTH(c_data6) = 11;");
 
-						StringBuilder sb = new StringBuilder();
+						SimpleDateFormat sdf = new SimpleDateFormat(
+								"yyyy-MM-dd");
+						String dateStr = sdf.format(new Date(System
+								.currentTimeMillis()));
+						
+						// load play id
+						ResultSet rs = statement
+								.executeQuery("SELECT DISTINCT c_data6 FROM d_live_manage.t_live_comm_dzd WHERE CHAR_LENGTH(c_data6) = 11 AND c_data3 = '"
+										+ dateStr + "';");
+
 						int count = 0;
 						while (rs.next()) {
 							String playID = rs.getString(1);
-							ids.add(playID);
-							sb.append(playID);
-							sb.append(",");
+							playIds.add(playID);
 							count++;
 						}
-						logger.info("load " + count + " playids: "
-								+ sb.toString());
+						logger.info("load " + count + " playids");
+						
+						// load album id
+						rs = statement
+								.executeQuery("SELECT DISTINCT c_data6 FROM d_live_manage.t_live_comm_dzd WHERE CHAR_LENGTH(c_data6) = 15 AND c_data3 = '"
+										+ dateStr + "';");
+						count = 0;
+						while (rs.next()) {
+							String playID = rs.getString(1);
+							albumIds.add(playID);
+							count++;
+						}
+						logger.info("load " + count + " albumids");
+						
 						conn.close();
 					} catch (SQLException e) {
 						logger.error("failed to execute sql: "
 								+ Utils.stringifyException(e));
 					}
 
-					playIdsRef.set(ids);
-
+					playIdsRef.set(playIds);
+					albumIdsRef.set(albumIds);
+					
 					latch.countDown();
 				}
 
@@ -166,8 +187,7 @@ public class HinaSourceSpout implements IRichSpout {
 			logger.info("register in zookeeper " + zkHost + " path " + zkPath
 					+ Config.SPOUT_REGISTER_PATH);
 		} catch (Exception e) {
-			logger.error("failed to open spout: "
-					+ Utils.stringifyException(e));
+			logger.error("failed to open spout: " + Utils.stringifyException(e));
 			// e.printStackTrace();
 		}
 	}
@@ -201,28 +221,30 @@ public class HinaSourceSpout implements IRichSpout {
 		HinaEvent event = messageQueue.poll();
 		if (event == null)
 			return;
-		
+
 		statics.handlePacket.getAndIncrement();
-		
-		if (event.getProperties().get("category") == null 
-				|| !event.getProperties().get("category").equals(STREAM_ID_MultDevVod)) {
+
+		if (event.getProperties().get("category") == null
+				|| !event.getProperties().get("category")
+						.equals(STREAM_ID_MultDevVod)) {
 			statics.wrongStreamPacket.getAndIncrement();
 			return;
 		}
 
 		LogEntry entry = parseBody(new String(event.getBody()));
-		if (entry == null 
-				|| System.currentTimeMillis() - entry.getTimestamp() > 4 * writeInterval * 1000 ) {
+		if (entry == null
+				|| System.currentTimeMillis() - entry.getTimestamp() > 4 * writeInterval * 1000) {
 			statics.timeoutPacket.getAndIncrement();
 			return;
 		}
-		
-		if (!playIdsRef.get().contains(entry.getPlayid())) {
+
+		if (!playIdsRef.get().contains(entry.getPlayid())
+				&& !albumIdsRef.get().contains(entry.getAlbum())) {
 			statics.invalidPlayidPacket.getAndIncrement();
 			return;
 		}
 
-//		logger.info("log: " + new String(event.getBody()));
+		// logger.info("log: " + new String(event.getBody()));
 		collector.emit(STREAM_ID_MultDevVod, new Values(entry.getTimestamp(),
 				entry.getAlbum(), entry.getPlayid(), entry.getDevtype()));
 		statics.emitPacket.getAndIncrement();
