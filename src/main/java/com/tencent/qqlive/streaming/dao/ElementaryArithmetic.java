@@ -11,27 +11,47 @@ import java.util.Stack;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ElementaryArithmetic {
-	static final Operator LEFT_BRACKES = new Operator('(', 0);
-	static final Operator RIGHT_BRACKES = new Operator(')', 0);
-	static final Operator ADD_OPERATOR = new Operator('+', 1);
-	static final Operator SUB_OPERATOR = new Operator('-', 1);
-	static final Operator MUL_OPERATOR = new Operator('*', 2);
-	static final Operator DIV_OPERATOR = new Operator('/', 2);
+	public static final Operator LEFT_BRACKES = new Operator('(', 0);
+	public static final Operator RIGHT_BRACKES = new Operator(')', 0);
+	public static final Operator ADD_OPERATOR = new Operator('+', 1);
+	public static final Operator SUB_OPERATOR = new Operator('-', 1);
+	public static final Operator MUL_OPERATOR = new Operator('*', 2);
+	public static final Operator DIV_OPERATOR = new Operator('/', 2);
 	
-	
+	private String itemName = null;
+
 	private List<String> infixNotation = null;
 	private List<String> postfixNotation = null;
+	
+	private int count = 0;
 	
 	// token -> Operand, 函数compute和calcResult被不同的线程调用
 	private AtomicReference<HashMap<String, Operand>> operandsRef = new AtomicReference<HashMap<String, Operand>>();
 		
-	public ElementaryArithmetic(String expression) {
-		infixNotation = tokenizer(expression);
+	public ElementaryArithmetic(String itemName) {
+		this.itemName = itemName;
+		infixNotation = tokenizer(itemName);
 		postfixNotation = toPostfix(infixNotation);
 		
 		resetOperands();
 	}
 	
+	public String getItemName() {
+		return itemName;
+	}
+	
+	public List<String> getInfixNotation() {
+		return infixNotation;
+	}
+
+	public List<String> getPostfixNotation() {
+		return postfixNotation;
+	}
+
+	public int getCount() {
+		return count;
+	}
+
 	public void compute(Map<String, String> itemValues) {
 		for (Map.Entry<String, Operand> entry : operandsRef.get().entrySet()) {
 			String name = entry.getKey();
@@ -44,8 +64,8 @@ public class ElementaryArithmetic {
 			
 			// 表达式中的值都认为是Long类型
 			entry.getValue().compute(Long.valueOf(value));
-			System.out.println(entry.getKey() + ":" + entry.getValue().getValue());
 		}
+		count++;
 	}
 	
 	public double calcResult() {

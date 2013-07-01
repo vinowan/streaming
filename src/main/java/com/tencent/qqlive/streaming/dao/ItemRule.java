@@ -15,7 +15,6 @@ public class ItemRule {
 	public static final int SUMMARY_TYPE_COUNT = 3;//Çó¸öÊý
 	
 	private int itilID = 0;
-	private String itemName = null;
 	private ElementaryArithmetic arithExpr = null;
 	private double motion = 0.0;
 	private Map<String, ItemRange> itemRanges = null;
@@ -34,12 +33,6 @@ public class ItemRule {
 	}
 	public void setItilID(int itilID) {
 		this.itilID = itilID;
-	}
-	public String getItemName() {
-		return itemName;
-	}
-	public void setItemName(String itemName) {
-		this.itemName = itemName;
 	}
 	public ElementaryArithmetic getArithExpr() {
 		return arithExpr;
@@ -140,5 +133,38 @@ public class ItemRule {
 				return false;
 		}
 		return true;
+	}
+	
+	public double calcContribRate(int hour, double splitResult, double totalResult, 
+			int splitCount, int totalCount) {
+		double contribRate = 0.0;
+		
+		List<String> notations = arithExpr.getPostfixNotation();
+		if (notations.size() == 1 && notations.get(0).startsWith("[") 
+				&& notations.get(0).endsWith("]")) {
+			if (totalResult == 0)
+				return -1;
+			
+			contribRate = splitResult * 100 / totalResult;
+		} else {
+			if (splitCount == 0 || totalCount == 0)
+				return -1;
+			
+			HourMotion.Range range = hourMotion.getRange(hour);
+			if (range == null)
+				return -1;
+			
+			if (splitResult > range.getMax()) {
+				contribRate = 100 * ((splitResult - range.getMax()) * splitCount)
+						/ ((totalResult - range.getMax()) * totalCount);
+			} else if (splitResult < range.getMin()) {
+				contribRate = 100 * ((splitResult - range.getMin()) * splitCount)
+						/ ((totalResult - range.getMin()) * totalCount);
+			} else {
+				contribRate = -1;
+			}
+		}
+		
+		return contribRate;
 	}
 }

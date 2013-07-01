@@ -89,8 +89,20 @@ public class Utils {
 		return url.substring(0, eIdx);
 	}
 	
+	public static String join(String[] strArray, String delimiter) {
+		StringBuilder sb = new StringBuilder();
+		
+		for (int i = 0; i<strArray.length; i++) {
+			sb.append(strArray[i]);
+			if (i != strArray.length - 1)
+				sb.append(delimiter);
+		}
+		
+		return sb.toString();
+	}
+	
 	public static void main(String[] args) {
-		String url = "http://218.108.149.233/vkp.tc.qq.com/r0012wt0gdl.p202.1.mp4";
-		System.out.println(getURLVKey(url));
+		String[] strArray = {"a", "b", "c"};
+		System.out.println(join(strArray, ","));
 	}
 }

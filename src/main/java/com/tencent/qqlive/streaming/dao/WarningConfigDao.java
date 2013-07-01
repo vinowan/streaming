@@ -44,7 +44,7 @@ public class WarningConfigDao {
 		FileRule result = new FileRule();
 		
 		result.setWarningRules(getItemRuleForFile(file));
-		result.setLatitudeRules(getLatitudeRuleForFile(file));
+		result.setSegmentRules(getSegmentRuleForFile(file));
 		result.getExprs(); // eagerly init
 		
 		return result;
@@ -68,9 +68,7 @@ public class WarningConfigDao {
 				int itilID = rs.getInt(1);
 				wr.setItilID(itilID);
 				
-				String itemName = rs.getString(2);
-				wr.setItemName(itemName);
-				
+				String itemName = rs.getString(2);				
 				ElementaryArithmetic arithExpr = new ElementaryArithmetic(itemName);
 				wr.setArithExpr(arithExpr);
 				
@@ -116,33 +114,27 @@ public class WarningConfigDao {
 		return result;
 	}
 	
-	public List<LatitudeRule> getLatitudeRuleForFile(String file) throws SQLException {
+	public Map<String, SegmentRule> getSegmentRuleForFile(String file) throws SQLException {
 		Statement statement = conn.createStatement();
 //		statement.executeUpdate("set names gbk");
 		
-		String sql = "select * from d_auto_statistic.t_real_data_analysis_latitude_config " +
+		String sql = "select * from d_auto_statistic.t_real_data_warn_segment_config " +
 				"where f_log_id in (select f_log_id from d_auto_statistic.t_cmd where f_log_file_name = \"" + file + "\")";
 		logger.info("execute Query: " + sql);
 		
 		ResultSet rs = statement.executeQuery(sql);
 		
-		List<LatitudeRule> result = new ArrayList<LatitudeRule>();
+		Map<String, SegmentRule> result = new HashMap<String, SegmentRule>();
 		while(rs.next()) {
-			LatitudeRule lr = new LatitudeRule();
+			SegmentRule lr = new SegmentRule();
 			
-			String itemName = rs.getString(2);
-			lr.setItemName(itemName);
+			List<SegmentRule.Segment> rules = SegmentRule.Segment.valueof(rs.getString(2));
+			lr.setRules(rules);
 			
-			int operation = rs.getInt(3);
-			lr.setOperation(operation);
-			
-			String category = rs.getString(4);
-			lr.setCategory(category);
-			
-			double contribMinRate = rs.getDouble(5);
+			double contribMinRate = rs.getDouble(3);
 			lr.setContribMinRate(contribMinRate);
 			
-			result.add(lr);
+			result.put(lr.getCategory(null).getCategory(), lr);
 		}
 		
 		return result;

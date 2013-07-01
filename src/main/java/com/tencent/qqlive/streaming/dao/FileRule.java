@@ -1,13 +1,12 @@
 package com.tencent.qqlive.streaming.dao;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class FileRule {
 	private Map<Integer, ItemRule> warningRules = null;
-	private List<LatitudeRule> latitudeRules = null;
+	private Map<String, SegmentRule> segmentRules = null;
 	private Set<String> exprs = null;
 	
 	public Map<Integer, ItemRule> getWarningRules() {
@@ -18,12 +17,12 @@ public class FileRule {
 		this.warningRules = warningRules;
 	}
 	
-	public List<LatitudeRule> getLatitudeRules() {
-		return latitudeRules;
+	public Map<String, SegmentRule> getSegmentRules() {
+		return segmentRules;
 	}
 	
-	public void setLatitudeRules(List<LatitudeRule> latitudeRules) {
-		this.latitudeRules = latitudeRules;
+	public void setSegmentRules(Map<String, SegmentRule> segmentRules) {
+		this.segmentRules = segmentRules;
 	}
 	
 	public Set<String> getExprs() {
@@ -35,8 +34,10 @@ public class FileRule {
 			exprs.addAll(entry.getValue().getExpression());
 		}
 		
-		for (LatitudeRule lr : latitudeRules) {
-			exprs.add(lr.getItemName());
+		for (Map.Entry<String, SegmentRule> entry : segmentRules.entrySet()) {
+			for (SegmentRule.Segment seg : entry.getValue().getRules()) {
+				exprs.add(seg.getItemName());
+			}
 		}
 		
 		return exprs;

@@ -7,7 +7,6 @@ public class Operand {
 	private String name = null;
 	private int computeType = COMPUTE_TYPE_SUM;
 	private long value = 0L;
-	private int count = 0;
 	
 	public Operand(String name) {
 		this.name = name;
@@ -27,18 +26,12 @@ public class Operand {
 	public long getValue() {
 		return value;
 	}
-
-	public int getCount() {
-		return count;
-	}
 	
 	public void compute(long val) {
 		if (computeType == COMPUTE_TYPE_CNT) {
 			value += 1;
-			count++;
 		} else {
 			value += val;
-			count++;
 		}
 	}
 	
@@ -60,6 +53,6 @@ public class Operand {
 	@Override
 	public String toString() {
 //		return name + ": (" + value + "," + count + ")";
-		return String.format("%s:(%d,%d)", name, value, count);
+		return String.format("%s:%d", name, value);
 	}
 }

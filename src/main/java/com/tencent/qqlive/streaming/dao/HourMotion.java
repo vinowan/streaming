@@ -42,7 +42,7 @@ public class HourMotion {
 		
 		@Override
 		public String toString() {
-			return String.format("%.2f~%.2f", min, max);
+			return String.format("[%.2f~%.2f]", min, max);
 		}
 		
 		public static Range valueOf(String value) {
@@ -87,10 +87,11 @@ public class HourMotion {
 		return compareType;
 	}
 	
+	// false无需告警，true需要告警
 	public boolean validate(double result, int hour) {
 		Range range = hourMotions.get(hour);
 		if (range == null)
-			return false;
+			return false; // 如果没有设置，则认为没有限制
 		
 		return range.validate(result);
 	}

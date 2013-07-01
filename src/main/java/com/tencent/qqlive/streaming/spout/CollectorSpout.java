@@ -15,6 +15,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +51,6 @@ public class CollectorSpout implements IRichSpout {
 
 	private HinaSourceServer server = null;
 	private ZkClient zkc = null;
-	private Connection conn = null;
 	
 	private ScheduledExecutorService executor = null;
 	
@@ -59,7 +59,7 @@ public class CollectorSpout implements IRichSpout {
 	private String dbUser = null;
 	private String dbPwd = null;
 
-	private Map<String, FileRule> fileRules = null;
+	private AtomicReference<HashMap<String, FileRule>> fileRulesRef = null;
 	private CountDownLatch latch = null; // 用于标识初始化完成
 
 	private SpoutStatics statics = null;
@@ -69,7 +69,7 @@ public class CollectorSpout implements IRichSpout {
 		public void run() {
 			DatabaseConnection dbc = new DatabaseConnection(dbHost, dbPort,
 					dbUser, dbPwd);
-			fileRules = new HashMap<String, FileRule>();
+			HashMap<String, FileRule> fileRules = new HashMap<String, FileRule>();
 
 			try {
 				Connection conn = dbc.getConn();
@@ -85,6 +85,8 @@ public class CollectorSpout implements IRichSpout {
 				}
 
 				conn.close();
+				
+				fileRulesRef.set(fileRules);
 
 				latch.countDown();
 
@@ -123,6 +125,8 @@ public class CollectorSpout implements IRichSpout {
 		
 //		int reloadInterval = Integer.valueOf((String)conf.get("reload.interval"));
 		int reloadInterval = Config.getInt(conf, "reload.interval", 300);
+		
+		fileRulesRef = new AtomicReference<HashMap<String,FileRule>>();
 		
 		executor.scheduleAtFixedRate(new DBConfigUpdater(), 0, reloadInterval, TimeUnit.SECONDS);
 		logger.info("waiting for load config from database: " + dbHost);
@@ -163,10 +167,6 @@ public class CollectorSpout implements IRichSpout {
 			if (zkc != null) 
 				zkc.disconnect();
 			
-			
-			if (conn != null)
-				conn.close();
-			
 			if (server != null) 
 				server.stopServer();
 		} catch (Exception e) {
@@ -189,7 +189,7 @@ public class CollectorSpout implements IRichSpout {
 		
 		statics.handlePacket.getAndIncrement();
 		
-		FileRule fr = fileRules.get(event.getCategory());
+		FileRule fr = fileRulesRef.get().get(event.getCategory());
 		if (fr == null) {
 			statics.wrongStreamPacket.getAndIncrement();
 			return;
@@ -207,6 +207,8 @@ public class CollectorSpout implements IRichSpout {
 				List<Object> tuple = new ArrayList<Object>();
 				// first item is itil id
 				tuple.add(entry.getKey());
+				// second item is timestamp
+				tuple.add(log.getTimestamp());
 				
 				for (Map.Entry<String, String> field : log.getFields().entrySet()) {
 					tuple.add(new String(field.getKey() + "=" + field.getValue()));
@@ -229,9 +231,10 @@ public class CollectorSpout implements IRichSpout {
 	}
 
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		for (Map.Entry<String, FileRule> entry : fileRules.entrySet()) {
+		for (Map.Entry<String, FileRule> entry : fileRulesRef.get().entrySet()) {
 			List<String> fields = new ArrayList<String>();
 			fields.add("itil");
+			fields.add("timestamp");
 			fields.addAll(entry.getValue().getExprs());
 			
 			// 每个file都是一个单独的stream
@@ -249,7 +252,7 @@ public class CollectorSpout implements IRichSpout {
 		
 		entry.setCategory(event.getCategory());
 		
-		Set<String> exprs = fileRules.get(event.getCategory()).getExprs();
+		Set<String> exprs = fileRulesRef.get().get(event.getCategory()).getExprs();
 		
 		String body = new String(event.getBody());
 		String[] items = body.split("\\s+");
