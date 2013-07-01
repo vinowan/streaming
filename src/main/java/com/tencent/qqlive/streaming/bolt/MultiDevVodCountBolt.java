@@ -5,12 +5,15 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,11 +49,15 @@ public class MultiDevVodCountBolt implements IRichBolt {
 	
 	private BoltStatics statics = null;
 	
+	private AtomicLong currTs = null;
+	
 	public void prepare(Map conf, TopologyContext context,
 			OutputCollector collector) {
 		this.conf = conf;
 		this.collector = collector;
 		this.context = context;
+		
+		currTs = new AtomicLong();
 		
 		statics = new BoltStatics();
 		
@@ -125,11 +132,18 @@ public class MultiDevVodCountBolt implements IRichBolt {
 						throw new RuntimeException("failed to load mysql jdbc driver");
 					}
 					
+					SimpleDateFormat sdf = new SimpleDateFormat(
+							"yyyy-MM-dd");
+					String dateStr = sdf.format(new Date(currTs.get()));
+					
 					try {
 						conn = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
-						PreparedStatement statement = conn.prepareStatement("INSERT INTO d_live_manage.t_multi_dev_vod_view(album, playid, devtype, timestamp, view) VALUES(?, ?, ?, ?, ?);");
+						PreparedStatement statement = conn.prepareStatement("INSERT INTO d_live_manage.t_multi_dev_vod_view_" + dateStr + "(album, playid, devtype, timestamp, view) VALUES(?, ?, ?, ?, ?);");
 						
 						for(Map.Entry<LogEntry, Integer> entry : results.entrySet()) {
+							if (entry.getValue() <= 5)
+								continue;
+							
 							statement.setString(1, entry.getKey().getAlbum());
 							statement.setString(2, entry.getKey().getPlayid());
 							statement.setString(3, entry.getKey().getDevtype());
@@ -166,6 +180,9 @@ public class MultiDevVodCountBolt implements IRichBolt {
 //		logger.info("recv: " + timestamp + " " + album + " " + playid + " " + devtype);
 		
 		timestamp = timestamp - timestamp % (writeInterval * 1000);
+		
+		if (currTs.get() < timestamp) 
+			currTs.set(timestamp);
 		
 		LogEntry entry = new LogEntry();
 		entry.setAlbum(album);
