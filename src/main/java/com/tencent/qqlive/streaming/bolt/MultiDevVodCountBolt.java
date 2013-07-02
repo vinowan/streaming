@@ -141,8 +141,8 @@ public class MultiDevVodCountBolt implements IRichBolt {
 						PreparedStatement statement = conn.prepareStatement("INSERT INTO d_real_time_statis_data.t_multi_dev_vod_view_" + dateStr + "(album, playid, devtype, timestamp, view) VALUES(?, ?, ?, ?, ?);");
 						
 						for(Map.Entry<LogEntry, Integer> entry : results.entrySet()) {
-							if (entry.getValue() <= 5)
-								continue;
+//							if (entry.getValue() <= 5)
+//								continue;
 							
 							statement.setString(1, entry.getKey().getAlbum());
 							statement.setString(2, entry.getKey().getPlayid());
