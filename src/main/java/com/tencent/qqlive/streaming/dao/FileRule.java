@@ -5,7 +5,9 @@ import java.util.Map;
 import java.util.Set;
 
 public class FileRule {
+	// itil -> ItemRule
 	private Map<Integer, ItemRule> warningRules = null;
+	// category -> SegmentRule
 	private Map<String, SegmentRule> segmentRules = null;
 	private Set<String> exprs = null;
 	

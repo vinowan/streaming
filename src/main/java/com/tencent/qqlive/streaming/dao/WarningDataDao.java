@@ -36,7 +36,8 @@ public class WarningDataDao {
 		statement.executeUpdate(sql);
 	}
 	
-	public void insertSMSWarning(long timestamp, int itilID, String itilDesc, String bussiness, double result, String range) throws SQLException {
+	public void insertSMSWarning(long timestamp, int itilID, String itilDesc, String bussiness, 
+			String recoveryDesc, double result, String range, String receiver) throws SQLException {
 		timestamp -= timestamp % (300 * 1000);
 		
 		Date date = new Date(timestamp);
@@ -45,16 +46,15 @@ public class WarningDataDao {
 		String tsStr = formatter.format(date);
 		
 		Statement statement = conn.createStatement();
-		String sql = String.format("insert into d_data_manager.t_real_data_sms_warn(f_time, f_itil_id, f_itil_desc, f_business, f_value, f_range) " +
-				"values('%s', %d, '%s', '%s', %.2f, '%s')", tsStr, itilID, itilDesc, bussiness, result, range);
+		String sql = String.format("insert into d_data_manager.t_real_data_sms_warn(f_time, f_itil_id, f_itil_desc, f_business, f_recovery_desc, f_value, f_range, f_msg_recver) " +
+				"values('%s', %d, '%s', '%s', '%s', %.2f, '%s', '%s')", tsStr, itilID, itilDesc, bussiness, recoveryDesc, result, range, receiver);
 		logger.debug("execute sql: " + sql);
-		System.out.println(sql);
 		
 		statement.executeUpdate(sql);
 	}
 	
 	public void insertEMailWarning(long timestamp, int itilID, String itilDesc, String categoryDesc, String categoryVal, 
-			double categoryRes, double totoalResult, String range, double contribution) throws SQLException {
+			double categoryRes, double totoalResult, String range, double contribution, String receiver) throws SQLException {
 		timestamp -= timestamp % (300 * 1000);
 		
 		Date date = new Date(timestamp);
@@ -63,9 +63,9 @@ public class WarningDataDao {
 		String tsStr = formatter.format(date);
 		
 		Statement statement = conn.createStatement();
-		String sql = String.format("insert into d_data_manager.t_real_data_email_warn(f_time, f_itil_id, f_itil_desc, f_category_desc, f_category_value, f_category_result, f_total_result, f_range, f_contribution) " +
-				"values('%s', %d, '%s', '%s', '%s', %.2f, %.2f, '%s', %.2f)", 
-				tsStr, itilID, itilDesc, categoryDesc, categoryVal, categoryRes, totoalResult, range, contribution);
+		String sql = String.format("insert into d_data_manager.t_real_data_email_warn(f_time, f_itil_id, f_itil_desc, f_category_desc, f_category_value, f_category_result, f_total_result, f_range, f_contribution, f_msg_recver) " +
+				"values('%s', %d, '%s', '%s', '%s', %.2f, %.2f, '%s', %.2f, '%s')", 
+				tsStr, itilID, itilDesc, categoryDesc, categoryVal, categoryRes, totoalResult, range, contribution, receiver);
 		logger.debug("execute sql: " + sql);
 		
 		statement.executeUpdate(sql);

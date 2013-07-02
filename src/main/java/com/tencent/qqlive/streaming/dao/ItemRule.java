@@ -167,4 +167,14 @@ public class ItemRule {
 		
 		return contribRate;
 	}
+	
+	public double zoom(double value) {
+		if (zoomSize == 0) {
+			return value;
+		} else if (zoomSize < 0) {
+			return value / Math.abs(zoomSize);
+		} else {
+			return value * zoomSize;
+		}
+	}
 }

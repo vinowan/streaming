@@ -123,8 +123,11 @@ public class SegmentRule {
 		@Override
 		public int hashCode() {
 			int ret = 17;
-			ret = 37*ret + category.hashCode();
-			ret = 37*ret + value.hashCode();
+			if (category != null)
+				ret = 37*ret + category.hashCode();
+			
+			if (value != null)
+				ret = 37*ret + value.hashCode();
 			
 			return ret;
 		}
@@ -170,6 +173,8 @@ public class SegmentRule {
 					return null;
 				
 				valArray[i] = seg.getValue(val);
+				if (valArray[i] == null)
+					return null;
 			}
 			i++;
 		}

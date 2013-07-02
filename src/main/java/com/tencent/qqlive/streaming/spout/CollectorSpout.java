@@ -140,7 +140,7 @@ public class CollectorSpout implements IRichSpout {
 
 		try {
 			// wait for db config
-			if(!latch.await(10, TimeUnit.SECONDS)) 
+			if(!latch.await(60, TimeUnit.SECONDS)) 
 				throw new RuntimeException("failed to load config from database: " + dbHost);
 			
 			server = new HinaSourceServer(messageQueue, statics);
@@ -215,7 +215,7 @@ public class CollectorSpout implements IRichSpout {
 				}
 				
 				collector.emit(log.getCategory(), tuple);
-				statics.incr(log.getCategory());				
+				statics.emitStream.getAndIncrement();			
 			}
 		}
 	}
@@ -280,5 +280,4 @@ public class CollectorSpout implements IRichSpout {
 		
 		return entry;
 	}
-
 }

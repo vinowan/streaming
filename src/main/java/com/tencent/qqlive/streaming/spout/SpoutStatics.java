@@ -1,7 +1,5 @@
 package com.tencent.qqlive.streaming.spout;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.tencent.qqlive.streaming.util.ComponentStats;
@@ -13,8 +11,9 @@ public class SpoutStatics extends ComponentStats {
 	public AtomicLong wrongStreamPacket = new AtomicLong();
 	public AtomicLong timeoutPacket = new AtomicLong();
 	public AtomicLong noCategory = new AtomicLong();
+	public AtomicLong emitStream = new AtomicLong();
 	
-	private Map<String, AtomicLong> emitStream = new HashMap<String, AtomicLong>();
+//	private Map<String, AtomicLong> emitStream = new HashMap<String, AtomicLong>();
 	
 	private String componentName = null;
 	
@@ -22,15 +21,15 @@ public class SpoutStatics extends ComponentStats {
 		this.componentName = componentName;
 	}
 	
-	public void incr(String stream) {
-		AtomicLong stats = emitStream.get(stream);
-		if (stats == null) {
-			stats = new AtomicLong(0);
-			emitStream.put(stream, stats);
-		}
-		
-		stats.incrementAndGet();
-	}
+//	public void incr(String stream) {
+//		AtomicLong stats = emitStream.get(stream);
+//		if (stats == null) {
+//			stats = new AtomicLong(0);
+//			emitStream.put(stream, stats);
+//		}
+//		
+//		stats.incrementAndGet();
+//	}
 	
 	@Override
 	public String toStr() {
@@ -47,11 +46,13 @@ public class SpoutStatics extends ComponentStats {
 		sb.append("\n");
 		sb.append("noCategory: " + noCategory.get());
 		sb.append("\n");
+		sb.append("emitStream: " + emitStream.get());
+		sb.append("\n");
 		
-		for (Map.Entry<String, AtomicLong> entry : emitStream.entrySet()) {
-			sb.append(entry.getKey() + ": " + entry.getValue().get());
-			sb.append("\n");
-		}
+//		for (Map.Entry<String, AtomicLong> entry : emitStream.entrySet()) {
+//			sb.append(entry.getKey() + ": " + entry.getValue().get());
+//			sb.append("\n");
+//		}
 		
 		return sb.toString();
 	}
@@ -64,10 +65,11 @@ public class SpoutStatics extends ComponentStats {
 		wrongStreamPacket.set(0);
 		timeoutPacket.set(0);
 		noCategory.set(0);
+		emitStream.set(0);
 		
-		for (Map.Entry<String, AtomicLong> entry : emitStream.entrySet()) {
-			entry.getValue().set(0);
-		}
+//		for (Map.Entry<String, AtomicLong> entry : emitStream.entrySet()) {
+//			entry.getValue().set(0);
+//		}
 	}
 
 	@Override
