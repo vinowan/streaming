@@ -100,10 +100,10 @@ public class MultiDevVodCountBolt implements IRichBolt {
 //					dbUser = config.get("db.user");
 //					dbPassword = config.get("db.password");
 					
-					dbHost = (String)conf.get("db.host");
-					dbPort = (String)conf.get("db.port");
-					dbUser = (String)conf.get("db.user");
-					dbPassword = (String)conf.get("db.password");
+					dbHost = (String)conf.get("data.db.host");
+					dbPort = (String)conf.get("data.db.port");
+					dbUser = (String)conf.get("data.db.user");
+					dbPassword = (String)conf.get("data.db.password");
 		
 					if (dbHost == null || dbPort == null 
 							|| dbUser == null || dbPassword == null)
@@ -133,12 +133,12 @@ public class MultiDevVodCountBolt implements IRichBolt {
 					}
 					
 					SimpleDateFormat sdf = new SimpleDateFormat(
-							"yyyy-MM-dd");
+							"yyyyMMdd");
 					String dateStr = sdf.format(new Date(currTs.get()));
 					
 					try {
 						conn = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
-						PreparedStatement statement = conn.prepareStatement("INSERT INTO d_live_manage.t_multi_dev_vod_view_" + dateStr + "(album, playid, devtype, timestamp, view) VALUES(?, ?, ?, ?, ?);");
+						PreparedStatement statement = conn.prepareStatement("INSERT INTO d_real_time_statis_data.t_multi_dev_vod_view_" + dateStr + "(album, playid, devtype, timestamp, view) VALUES(?, ?, ?, ?, ?);");
 						
 						for(Map.Entry<LogEntry, Integer> entry : results.entrySet()) {
 							if (entry.getValue() <= 5)
@@ -211,7 +211,10 @@ public class MultiDevVodCountBolt implements IRichBolt {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		int initialDelay = 300 - (int)(System.currentTimeMillis()/1000) % 300;
-		System.out.println(initialDelay);
+		SimpleDateFormat sdf = new SimpleDateFormat(
+				"yyyyMMdd");
+		String dateStr = sdf.format(new Date(System.currentTimeMillis()));
+		String sql = "INSERT INTO d_real_time_statis_data.t_multi_dev_vod_view_" + dateStr + "(album, playid, devtype, timestamp, view) VALUES(?, ?, ?, ?, ?);";
+		System.out.println(sql);
 	}
 }

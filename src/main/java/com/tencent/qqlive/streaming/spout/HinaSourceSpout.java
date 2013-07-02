@@ -84,10 +84,10 @@ public class HinaSourceSpout implements IRichSpout {
 				|| writeIntervalStr == null)
 			throw new RuntimeException("failed to read config");
 
-		dbHost = (String) conf.get("db.host");
-		dbPort = (String) conf.get("db.port");
-		dbUser = (String) conf.get("db.user");
-		dbPassword = (String) conf.get("db.password");
+		dbHost = (String) conf.get("config.db.host");
+		dbPort = (String) conf.get("config.db.port");
+		dbUser = (String) conf.get("config.db.user");
+		dbPassword = (String) conf.get("config.db.password");
 
 		if (dbHost == null || dbPort == null || dbUser == null
 				|| dbPassword == null)
