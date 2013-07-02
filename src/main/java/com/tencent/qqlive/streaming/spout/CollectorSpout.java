@@ -28,9 +28,10 @@ import backtype.storm.tuple.Fields;
 
 import com.tencent.qqlive.streaming.dao.DatabaseConnection;
 import com.tencent.qqlive.streaming.dao.FileRule;
-import com.tencent.qqlive.streaming.dao.ItemRule;
+import com.tencent.qqlive.streaming.dao.ItilRule;
 import com.tencent.qqlive.streaming.dao.LogEntry;
 import com.tencent.qqlive.streaming.dao.WarningConfigDao;
+import com.tencent.qqlive.streaming.topology.StreamingTopology;
 import com.tencent.qqlive.streaming.util.Config;
 import com.tencent.qqlive.streaming.util.Utils;
 import com.tencent.qqlive.streaming.util.ZkClient;
@@ -63,7 +64,7 @@ public class CollectorSpout implements IRichSpout {
 	private CountDownLatch latch = null; // 用于标识初始化完成
 
 	private SpoutStatics statics = null;
-
+	
 	public class DBConfigUpdater implements Runnable {
 
 		public void run() {
@@ -76,8 +77,8 @@ public class CollectorSpout implements IRichSpout {
 
 				WarningConfigDao wcd = new WarningConfigDao(conn);
 
-				List<String> statsFile = wcd.getAllStatsFiles();
-				for (String file : statsFile) {
+				List<String> statsFiles = wcd.getAllStatsFiles();
+				for (String file : statsFiles) {
 					FileRule fr = wcd.getRuleForFile(file);
 					fileRules.put(file, fr);
 
@@ -97,7 +98,7 @@ public class CollectorSpout implements IRichSpout {
 		}
 
 	}
-
+	
 	public void open(Map conf, TopologyContext context,
 			SpoutOutputCollector collector) {
 		this.collector = collector;
@@ -160,6 +161,9 @@ public class CollectorSpout implements IRichSpout {
 			logger.error("failed to connect to zookeeper: " + Utils.stringifyException(e));
 			throw new RuntimeException(e);
 		}
+		
+		String log = "2013-07-02 14:15:00.002 [22446] [info] remote=171.123.52.86 qq=0 devid=B16A6B29-129B-4FB2-9379-5C1FB6898966 devtype=3 stick=1372679865974 ctick=1372745505662 ptick=512 cdnid=203 vodtype=3 playno=-1 playid=T00103WJHNb vodf=2 block=0 blocktime=0 blockb=-1 blocke=-1 seek=0 seektime=0 seekb=0 seeke=0 play=194 errcode=0 nettype=1 netstrength=-1 mcc=0 mnc=0 vodaddr=http://221.204.198.24/vlive.qqvideo.tc.qq.com/T00103WJHNb.p202.1.mp4?vkey=CDDA1D9FDEAC5E6EB231A829A486D2FE493E8D81908ADAFF025017BF26F5C5C8AB535A15B18CEBD7&sha=&level=3&br=200&fmt=hd&sdtfrom=v4000&platform=10103 app=2.3.0.2512 block_detail=no_play_block_info os_version=6.1.2 resolution=1536*2048 get_format_time=-1 get_url_time=-1 video_time=193 dev_model=iPad use_dlna=-1 play_source=1 net_ok=1 def_switch=-1 blocktime_1=0 def_switch_seq=no_def_switch_seq downed_data_size=-1 guid=6a737968e7641030b355d48564437054 dray_release=-1 market_id=1 pay_status=-1 pay_status_ios=-2 skip=-1 pre_load=-1 sd_card_flag=-1 imei=no_imei album=hmc0z7kb4pldg4d mac=60:FE:C5:75:77:AE log_flag=51";
+		messageQueue.offer(new HinaEvent(log.getBytes(), "tptsvr.exe_51.log.mobile"));
 	}
 
 	public void close() {
@@ -196,25 +200,34 @@ public class CollectorSpout implements IRichSpout {
 		}
 		
 		LogEntry log = parseEvent(event);
-		if (log == null 
-				|| System.currentTimeMillis() - log.getTimestamp() > 30 * 60 * 1000 ) {
-			statics.timeoutPacket.getAndIncrement();
-			return;
-		}
+//		if (log == null 
+//				|| System.currentTimeMillis() - log.getTimestamp() > 30 * 60 * 1000 ) {
+//			statics.timeoutPacket.getAndIncrement();
+//			return;
+//		}
 		
-		for (Map.Entry<Integer, ItemRule> entry : fr.getWarningRules().entrySet()) {
+		for (Map.Entry<Integer, ItilRule> entry : fr.getWarningRules().entrySet()) {
 			if (entry.getValue().validate(log)) {
 				List<Object> tuple = new ArrayList<Object>();
-				// first item is itil id
+				// first item is category
+				tuple.add(log.getCategory());
+				logger.info("Category: " + log.getCategory());
+				// second item is itil id
 				tuple.add(entry.getKey());
-				// second item is timestamp
+				logger.info("Itil: " + entry.getKey());
+				// third item is timestamp
 				tuple.add(log.getTimestamp());
+				logger.info("Timestamp: " + log.getTimestamp());
 				
+				List<String> body = new ArrayList<String>();
 				for (Map.Entry<String, String> field : log.getFields().entrySet()) {
-					tuple.add(new String(field.getKey() + "=" + field.getValue()));
+					body.add(new String(field.getKey() + "=" + field.getValue()));
 				}
 				
-				collector.emit(log.getCategory(), tuple);
+				tuple.add(Utils.join(body, "\t"));
+				logger.info("Body: " + Utils.join(body, "\t"));
+				
+//				collector.emit(StreamingTopology.STREAM_ID, tuple);
 				statics.emitStream.getAndIncrement();			
 			}
 		}
@@ -231,15 +244,16 @@ public class CollectorSpout implements IRichSpout {
 	}
 
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		for (Map.Entry<String, FileRule> entry : fileRulesRef.get().entrySet()) {
-			List<String> fields = new ArrayList<String>();
-			fields.add("itil");
-			fields.add("timestamp");
-			fields.addAll(entry.getValue().getExprs());
-			
-			// 每个file都是一个单独的stream
-			declarer.declareStream(entry.getKey(), new Fields(fields));
-		}
+		declarer.declareStream(StreamingTopology.STREAM_ID, new Fields("category", "itil", "timestamp", "body"));
+//		for (Map.Entry<String, FileRule> entry : fileRulesRef.get().entrySet()) {
+//			List<String> fields = new ArrayList<String>();
+//			fields.add("itil");
+//			fields.add("timestamp");
+//			fields.addAll(entry.getValue().getExprs());
+//			
+//			// 每个file都是一个单独的stream
+//			declarer.declareStream(entry.getKey(), new Fields(fields));
+//		}
 	}
 
 	public Map<String, Object> getComponentConfiguration() {

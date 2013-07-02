@@ -3,7 +3,6 @@ package com.tencent.qqlive.streaming.bolt;
 import java.sql.Connection;
 import java.util.Calendar;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -26,9 +25,9 @@ import com.tencent.qqlive.streaming.dao.DatabaseConnection;
 import com.tencent.qqlive.streaming.dao.ElementaryArithmetic;
 import com.tencent.qqlive.streaming.dao.FileRule;
 import com.tencent.qqlive.streaming.dao.HourMotion;
-import com.tencent.qqlive.streaming.dao.ItemRule;
+import com.tencent.qqlive.streaming.dao.ItilRule;
 import com.tencent.qqlive.streaming.dao.SegmentRule;
-import com.tencent.qqlive.streaming.dao.SegmentRule.Category;
+import com.tencent.qqlive.streaming.dao.SegmentRule.Dimension;
 import com.tencent.qqlive.streaming.dao.WarningConfigDao;
 import com.tencent.qqlive.streaming.dao.WarningDataDao;
 import com.tencent.qqlive.streaming.util.Config;
@@ -97,7 +96,7 @@ public class ComputeBolt implements IRichBolt {
 	// itil -> 计算表达式
 	private AtomicReference<HashMap<ID, ElementaryArithmetic>> itilExprsRef = null;
 	// itil -> 细分值 -> 计算表达式
-	private AtomicReference<HashMap<ID, HashMap<Category, ElementaryArithmetic>>> itilSegExprsRef = null;
+	private AtomicReference<HashMap<ID, HashMap<Dimension, ElementaryArithmetic>>> itilSegExprsRef = null;
 
 	public class DBConfigUpdater implements Runnable {
 
@@ -137,8 +136,8 @@ public class ComputeBolt implements IRichBolt {
 		public void run() {
 			HashMap<ID, ElementaryArithmetic> itilExprs 
 				= itilExprsRef.getAndSet(new HashMap<ID, ElementaryArithmetic>());
-			HashMap<ID, HashMap<Category, ElementaryArithmetic>> itilSegExprs 
-				= itilSegExprsRef.getAndSet(new HashMap<ID, HashMap<Category, ElementaryArithmetic>>());
+			HashMap<ID, HashMap<Dimension, ElementaryArithmetic>> itilSegExprs 
+				= itilSegExprsRef.getAndSet(new HashMap<ID, HashMap<Dimension, ElementaryArithmetic>>());
 			
 			long timestamp = currentTs.get();
 			timestamp = timestamp - timestamp % dumpInterval;
@@ -156,7 +155,7 @@ public class ComputeBolt implements IRichBolt {
 					int itil = entry.getKey().getItil();
 					
 					FileRule fileRule = fileRulesRef.get().get(stream);
-					ItemRule itemRule = fileRule.getWarningRules().get(itil);
+					ItilRule itemRule = fileRule.getWarningRules().get(itil);
 					
 					double totalResult = entry.getValue().calcResult();
 					totalResult = itemRule.zoom(totalResult);
@@ -189,16 +188,16 @@ public class ComputeBolt implements IRichBolt {
 					wdd.insertSMSWarning(timestamp, itil, itemRule.getItilDesc(), itemRule.getBusiness(), 
 							recoveryDesc, totalResult, range.toString(), itemRule.getReceiver());
 					
-					HashMap<Category, ElementaryArithmetic> segExprs = itilSegExprs.get(entry.getKey());
-					for (Map.Entry<Category, ElementaryArithmetic> subEntry : segExprs.entrySet()) {
+					HashMap<Dimension, ElementaryArithmetic> segExprs = itilSegExprs.get(entry.getKey());
+					for (Map.Entry<Dimension, ElementaryArithmetic> subEntry : segExprs.entrySet()) {
 						double splitResult = subEntry.getValue().calcResult();
 						splitResult = itemRule.zoom(splitResult);
 						int splitCount = subEntry.getValue().getCount();
 						
 						double contribRate = itemRule.calcContribRate(hour, splitResult, totalResult, splitCount, totalCount);
-						SegmentRule segRule = fileRule.getSegmentRules().get(subEntry.getKey().getCategory());
+						SegmentRule segRule = fileRule.getSegmentRules().get(subEntry.getKey().getDimension());
 						if (contribRate > segRule.getContribMinRate()) {
-							wdd.insertEMailWarning(timestamp, itil, itemRule.getItilDesc(), subEntry.getKey().getCategory(), subEntry.getKey().getValue(), 
+							wdd.insertEMailWarning(timestamp, itil, itemRule.getItilDesc(), subEntry.getKey().getDimension(), subEntry.getKey().getValue(), 
 									splitResult, totalResult, range.toString(), contribRate, itemRule.getReceiver());
 						}
 					}
@@ -214,12 +213,12 @@ public class ComputeBolt implements IRichBolt {
 	public void prepare(Map conf, TopologyContext context,
 			OutputCollector collector) {
 		currentTs = new AtomicLong();
-		
+				
 		itilExprsRef = new AtomicReference<HashMap<ID, ElementaryArithmetic>>();
 		itilExprsRef.set(new HashMap<ID, ElementaryArithmetic>());
 
-		itilSegExprsRef = new AtomicReference<HashMap<ID, HashMap<Category, ElementaryArithmetic>>>();
-		itilSegExprsRef.set(new HashMap<ID, HashMap<Category, ElementaryArithmetic>>());
+		itilSegExprsRef = new AtomicReference<HashMap<ID, HashMap<Dimension, ElementaryArithmetic>>>();
+		itilSegExprsRef.set(new HashMap<ID, HashMap<Dimension, ElementaryArithmetic>>());
 
 		executor = Executors.newScheduledThreadPool(2);
 
@@ -241,6 +240,8 @@ public class ComputeBolt implements IRichBolt {
 		latch = new CountDownLatch(1);
 
 		int reloadInterval = Config.getInt(conf, "reload.interval", 300);
+		
+		fileRulesRef = new AtomicReference<HashMap<String,FileRule>>();
 
 		executor.scheduleAtFixedRate(new DBConfigUpdater(), 0, reloadInterval,
 				TimeUnit.SECONDS);
@@ -262,39 +263,32 @@ public class ComputeBolt implements IRichBolt {
 	}
 
 	public void execute(Tuple input) {
-		// get stream id
-		String stream = input.getSourceStreamId();
-		FileRule fileRule = fileRulesRef.get().get(stream);
-		if (fileRule == null) {
-			statics.wrongStream.getAndIncrement();
-			return;
-		}
-		
-		// parse tuple body
-		List<Object> values = input.getValues();
-		if (values.size() < 3) {
+		if (input.size() < 4) {
 			statics.wrongTuple.getAndIncrement();
 			return;
 		}
-
-		Map<String, String> itemValues = new HashMap<String, String>();
-
-		Iterator<Object> it = values.iterator();
-		Integer itil = (Integer)it.next();
-		Long timestamp = (Long)it.next();
+		
+		String category = input.getString(0);
+		int itil = input.getInteger(1);
+		long timestamp = input.getLong(2);
+		String body = input.getString(3);
+		
+		// get file rule
+		FileRule fileRule = fileRulesRef.get().get(category);
+		if (fileRule == null) {
+			statics.wrongCategory.getAndIncrement();
+			return;
+		}
+		
+		// update timestamp
 		if (timestamp > currentTs.get())
 			currentTs.set(timestamp);
 		
-		while (it.hasNext()) {
-			String[] key_value = ((String) it.next()).split("\\s*=\\s*");
-			if (key_value.length != 2)
-				continue;
-
-			itemValues.put(key_value[0], key_value[1]);
-		}
+		// parse body
+		Map<String, String> itemValues = parseBody(body);
 
 		// total
-		ItemRule itemRule = fileRule.getWarningRules().get(itil);
+		ItilRule itemRule = fileRule.getWarningRules().get(itil);
 		if (itemRule == null) {
 			statics.wrongItil.getAndIncrement();
 			return;
@@ -304,31 +298,31 @@ public class ComputeBolt implements IRichBolt {
 		if (expr == null) {
 			expr = new ElementaryArithmetic(itemRule.getArithExpr()
 					.getItemName());
-			itilExprsRef.get().put(new ID(stream, itil), expr);
+			itilExprsRef.get().put(new ID(category, itil), expr);
 		}
 
 		expr.compute(itemValues);
 
 		// segment
-		HashMap<Category, ElementaryArithmetic> segExprs = itilSegExprsRef
+		HashMap<Dimension, ElementaryArithmetic> segExprs = itilSegExprsRef
 				.get().get(itil);
 		if (segExprs == null) {
-			segExprs = new HashMap<Category, ElementaryArithmetic>();
-			itilSegExprsRef.get().put(new ID(stream, itil), segExprs);
+			segExprs = new HashMap<Dimension, ElementaryArithmetic>();
+			itilSegExprsRef.get().put(new ID(category, itil), segExprs);
 		}
 
 		for (SegmentRule segRule : fileRule.getSegmentRules().values()) {
-			Category category = segRule.getCategory(itemValues);
-			if (category == null) {
-				statics.categoryNull.getAndIncrement();
+			Dimension dimension = segRule.getDimension(itemValues);
+			if (dimension == null) {
+				statics.dimensionNull.getAndIncrement();
 				continue;
 			}
 
-			expr = segExprs.get(category);
+			expr = segExprs.get(dimension);
 			if (expr == null) {
 				expr = new ElementaryArithmetic(itemRule.getArithExpr()
 						.getItemName());
-				segExprs.put(category, expr);
+				segExprs.put(dimension, expr);
 			}
 
 			expr.compute(itemValues);
@@ -348,6 +342,18 @@ public class ComputeBolt implements IRichBolt {
 	public Map<String, Object> getComponentConfiguration() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+	
+	private Map<String, String> parseBody(String body) {
+		Map<String, String> itemValues = new HashMap<String, String>();
+		
+		String[] items = body.split("\\s+");
+		for (String item : items) {
+			String[] key_value = item.split("\\s*=\\s*");
+			itemValues.put(key_value[0], key_value[1]);
+		}
+		
+		return itemValues;
 	}
 	
 	public static void main(String[] args) {

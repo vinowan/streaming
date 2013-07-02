@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class ItemRule {
+public class ItilRule {
 	public static final int COMPARE_TYPE_LAGRGER = 1; //>=
 	public static final int COMPREA_TYPE_SMALLER = 2; //<=
 	public static final int COMPARE_TYPE_NOT_EQUAL = 3; //!= 

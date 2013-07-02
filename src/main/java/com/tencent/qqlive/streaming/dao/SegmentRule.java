@@ -103,15 +103,15 @@ public class SegmentRule {
 		}
 	}
 	
-	public static class Category {
-		private String category = null;
+	public static class Dimension {
+		private String dimension = null;
 		private String value = null;
 		
-		public String getCategory() {
-			return category;
+		public String getDimension() {
+			return dimension;
 		}
-		public void setCategory(String category) {
-			this.category = category;
+		public void setDimension(String category) {
+			this.dimension = category;
 		}
 		public String getValue() {
 			return value;
@@ -123,8 +123,8 @@ public class SegmentRule {
 		@Override
 		public int hashCode() {
 			int ret = 17;
-			if (category != null)
-				ret = 37*ret + category.hashCode();
+			if (dimension != null)
+				ret = 37*ret + dimension.hashCode();
 			
 			if (value != null)
 				ret = 37*ret + value.hashCode();
@@ -134,9 +134,9 @@ public class SegmentRule {
 		
 		@Override
 		public boolean equals(Object obj) {
-			if (obj instanceof Category) {
-				Category cat = (Category)obj;
-				return category.equals(cat.category) && value.equals(cat.value);
+			if (obj instanceof Dimension) {
+				Dimension cat = (Dimension)obj;
+				return dimension.equals(cat.dimension) && value.equals(cat.value);
 			}
 			
 			return false;
@@ -159,7 +159,7 @@ public class SegmentRule {
 		this.contribMinRate = contribMinRate;
 	}
 	
-	public Category getCategory(Map<String, String> itemValues) {
+	public Dimension getDimension(Map<String, String> itemValues) {
 		String[] catArray = new String[rules.size()];
 		String[] valArray = new String[rules.size()];
 		
@@ -179,8 +179,8 @@ public class SegmentRule {
 			i++;
 		}
 		
-		Category result = new Category();
-		result.setCategory(Utils.join(catArray, ","));
+		Dimension result = new Dimension();
+		result.setDimension(Utils.join(catArray, ","));
 		if (itemValues != null)
 			result.setValue(Utils.join(valArray, ","));
 		
@@ -192,7 +192,7 @@ public class SegmentRule {
 		SegmentRule rule = new SegmentRule();
 		rule.setRules(segs);
 		
-		Category cat = rule.getCategory(null);
-		System.out.println(cat.getCategory());
+		Dimension cat = rule.getDimension(null);
+		System.out.println(cat.getDimension());
 	}
 }

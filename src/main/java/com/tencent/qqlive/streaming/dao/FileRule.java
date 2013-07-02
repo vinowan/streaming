@@ -6,16 +6,16 @@ import java.util.Set;
 
 public class FileRule {
 	// itil -> ItemRule
-	private Map<Integer, ItemRule> warningRules = null;
+	private Map<Integer, ItilRule> warningRules = null;
 	// category -> SegmentRule
 	private Map<String, SegmentRule> segmentRules = null;
 	private Set<String> exprs = null;
 	
-	public Map<Integer, ItemRule> getWarningRules() {
+	public Map<Integer, ItilRule> getWarningRules() {
 		return warningRules;
 	}
 	
-	public void setWarningRules(Map<Integer, ItemRule> warningRules) {
+	public void setWarningRules(Map<Integer, ItilRule> warningRules) {
 		this.warningRules = warningRules;
 	}
 	
@@ -32,7 +32,7 @@ public class FileRule {
 			return exprs;
 		
 		exprs = new HashSet<String>();
-		for (Map.Entry<Integer, ItemRule> entry : warningRules.entrySet()) {
+		for (Map.Entry<Integer, ItilRule> entry : warningRules.entrySet()) {
 			exprs.addAll(entry.getValue().getExpression());
 		}
 		

@@ -3,6 +3,7 @@ package com.tencent.qqlive.streaming.util;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.InetAddress;
+import java.util.Collection;
 
 public class Utils {
 	public static String stringifyException(Throwable e) {
@@ -99,6 +100,11 @@ public class Utils {
 		}
 		
 		return sb.toString();
+	}
+	
+	public static String join(Collection<String> strColl, String delimiter) {
+		String[] strArray = strColl.toArray(new String[0]);
+		return join(strArray, delimiter);
 	}
 	
 	public static void main(String[] args) {

@@ -50,7 +50,7 @@ public class WarningConfigDao {
 		return result;
 	}
 	
-	public Map<Integer, ItemRule> getItemRuleForFile(String file) throws SQLException {
+	public Map<Integer, ItilRule> getItemRuleForFile(String file) throws SQLException {
 		Statement statement = conn.createStatement();
 //		statement.executeUpdate("set names gbk");
 		
@@ -60,10 +60,10 @@ public class WarningConfigDao {
 		
 		ResultSet rs = statement.executeQuery(sql);
 		
-		Map<Integer, ItemRule> result = new HashMap<Integer, ItemRule>();
+		Map<Integer, ItilRule> result = new HashMap<Integer, ItilRule>();
 		while(rs.next()) {
 			try {
-				ItemRule wr = new ItemRule();
+				ItilRule wr = new ItilRule();
 				
 				int itilID = rs.getInt(1);
 				wr.setItilID(itilID);
@@ -134,7 +134,7 @@ public class WarningConfigDao {
 			double contribMinRate = rs.getDouble(3);
 			lr.setContribMinRate(contribMinRate);
 			
-			result.put(lr.getCategory(null).getCategory(), lr);
+			result.put(lr.getDimension(null).getDimension(), lr);
 		}
 		
 		return result;
