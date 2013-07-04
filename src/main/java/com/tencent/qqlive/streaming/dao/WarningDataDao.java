@@ -29,7 +29,7 @@ public class WarningDataDao {
 		String tableName = "t_monitor_" + tsStr;
 		
 		Statement statement = conn.createStatement();
-		String sql = String.format("insert into d_data_manager.%s values(from_unixtime(%d), %d, %.2f)", tableName, timestamp/1000, itilID, result);
+		String sql = String.format("insert into d_data_manager.%s values(from_unixtime(%d), %.2f, %d)", tableName, timestamp/1000, result, itilID);
 		logger.debug("execute sql: " + sql);
 		System.out.println(sql);
 		
@@ -49,6 +49,7 @@ public class WarningDataDao {
 		String sql = String.format("insert into d_data_manager.t_real_data_sms_warn(f_time, f_itil_id, f_itil_desc, f_business, f_recovery_desc, f_value, f_range, f_msg_recver) " +
 				"values('%s', %d, '%s', '%s', '%s', %.2f, '%s', '%s')", tsStr, itilID, itilDesc, bussiness, recoveryDesc, result, range, receiver);
 		logger.debug("execute sql: " + sql);
+		System.out.println(sql);
 		
 		statement.executeUpdate(sql);
 	}
@@ -67,6 +68,7 @@ public class WarningDataDao {
 				"values('%s', %d, '%s', '%s', '%s', %.2f, %.2f, '%s', %.2f, '%s')", 
 				tsStr, itilID, itilDesc, categoryDesc, categoryVal, categoryRes, totoalResult, range, contribution, receiver);
 		logger.debug("execute sql: " + sql);
+		System.out.println(sql);
 		
 		statement.executeUpdate(sql);
 	}

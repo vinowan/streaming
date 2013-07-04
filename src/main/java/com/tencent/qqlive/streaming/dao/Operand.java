@@ -6,7 +6,8 @@ public class Operand {
 	
 	private String name = null;
 	private int computeType = COMPUTE_TYPE_SUM;
-	private long value = 0L;
+	private double value = 0.0;
+	private int count = 0;
 	
 	public Operand(String name) {
 		this.name = name;
@@ -23,16 +24,22 @@ public class Operand {
 		return computeType;
 	}
 
-	public long getValue() {
+	public double getValue() {
 		return value;
 	}
 	
-	public void compute(long val) {
+	public int getCount() {
+		return count;
+	}
+
+	public void compute(double val) {
 		if (computeType == COMPUTE_TYPE_CNT) {
 			value += 1;
 		} else {
 			value += val;
 		}
+		
+		count += 1;
 	}
 	
 	@Override

@@ -165,12 +165,11 @@ public class HourMotion {
 	}
 	
 	public static void main(String[] args) {
-		String value = "[0:50~100];[7~24:75~100];";
+		String value = "[0~24:1~100];";
 		
 		HourMotion hourMotion = HourMotion.valueOf(value);
 		
-		for (Map.Entry<Integer, Range> entry : hourMotion.hourMotions.entrySet()) {
-			System.out.println(entry.getKey() + ":" + entry.getValue().toString());
-		}
+		boolean ret = hourMotion.validate(2214.0, 14);
+		System.out.println(ret);
 	}
 }

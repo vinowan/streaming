@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.tencent.qqlive.streaming.util.IPInfo;
+import com.tencent.qqlive.streaming.util.IPInfo.IPBlockInfo;
 import com.tencent.qqlive.streaming.util.Utils;
 
 public class SegmentRule {
@@ -21,7 +22,7 @@ public class SegmentRule {
 		
 		private String itemName = null;
 		private int operation = OPERATION_TYPE_GET_NONE;
-		private String category = null;
+		private String dimension = null;
 		
 		public String getItemName() {
 			return itemName;
@@ -35,22 +36,39 @@ public class SegmentRule {
 		public void setOperation(int operation) {
 			this.operation = operation;
 		}
-		public String getCategory() {
-			return category;
+		public String getDimension() {
+			return dimension;
 		}
-		public void setCategory(String category) {
-			this.category = category;
+		public void setDimension(String dimension) {
+			this.dimension = dimension;
 		}
 		
 		String getValue(String value) {
 			String sResult = "";
+			IPBlockInfo blockInfo = null;
 			switch(operation)
 			{
 			case OPERATION_TYPE_GET_PROV :
-				sResult = IPInfo.getInstance().getIPBlock(value).province;
+				blockInfo = IPInfo.getInstance().getIPBlock(value);
+				if (blockInfo == null) {
+					sResult = "未知";
+				} else {
+					if (blockInfo.province == null)
+						sResult = "未知";
+					else
+						sResult = blockInfo.province;
+				}
 				break;
 			case OPERATION_TYPE_GET_ISP :
-				sResult = IPInfo.getInstance().getIPBlock(value).service;
+				blockInfo = IPInfo.getInstance().getIPBlock(value);
+				if (blockInfo == null) {
+					sResult = "未知";
+				} else {
+					if (blockInfo.province == null)
+						sResult = "未知";
+					else
+						sResult = blockInfo.service;
+				}
 				break;
 			case OPERATION_TYPE_GET_HOST :
 				sResult = Utils.getHostByUrl(value);
@@ -78,7 +96,7 @@ public class SegmentRule {
 		
 		@Override
 		public String toString() {
-			return String.format("%s:%d:%s", itemName, operation, category);
+			return String.format("%s:%d:%s", itemName, operation, dimension);
 		}
 		
 		// example: remote:1:分地区;remote:2:运营商;
@@ -94,7 +112,7 @@ public class SegmentRule {
 				Segment seg = new Segment();
 				seg.setItemName(vals[0]);
 				seg.setOperation(Integer.valueOf(vals[1]));
-				seg.setCategory(vals[2]);
+				seg.setDimension(vals[2]);
 				
 				segments.add(seg);
 			}
@@ -141,6 +159,11 @@ public class SegmentRule {
 			
 			return false;
 		}
+		
+		@Override
+		public String toString() {
+			return String.format("%s:%s", dimension, value);
+		}
 	}
 	
 	private List<Segment> rules = null;
@@ -165,7 +188,7 @@ public class SegmentRule {
 		
 		int i = 0;
 		for (Segment seg : rules) {
-			catArray[i] = seg.category;
+			catArray[i] = seg.dimension;
 			
 			if (itemValues != null) {
 				String val = itemValues.get(seg.getItemName());
@@ -188,11 +211,10 @@ public class SegmentRule {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		List<Segment> segs = Segment.valueof("remote:1:分地区;remote:2:运营商;");
-		SegmentRule rule = new SegmentRule();
-		rule.setRules(segs);
+		Segment seg = new Segment();
+		seg.setItemName("vodaddr");
+		seg.setOperation(Segment.OPERATION_TYPE_GET_PROV);
 		
-		Dimension cat = rule.getDimension(null);
-		System.out.println(cat.getDimension());
+		System.out.println(seg.getValue("192.168.0.1"));
 	}
 }

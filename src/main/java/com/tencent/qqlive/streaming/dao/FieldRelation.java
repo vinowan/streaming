@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.tencent.qqlive.streaming.util.IPInfo;
+import com.tencent.qqlive.streaming.util.IPInfo.IPBlockInfo;
 import com.tencent.qqlive.streaming.util.Utils;
 
 public class FieldRelation {
@@ -49,12 +50,30 @@ public class FieldRelation {
 	public boolean validate(String value) {
 		String result = null;
 		
+		IPBlockInfo blockInfo = null;
+		
 		switch (procOperator) {
 		case PROC_OPERATOR_GET_PROV:
-			result = IPInfo.getInstance().getIPBlock(value).province;
+			blockInfo = IPInfo.getInstance().getIPBlock(value);
+			if (blockInfo == null) {
+				result = "δ֪";
+			} else {
+				if (blockInfo.province == null)
+					result = "δ֪";
+				else
+					result = blockInfo.province;
+			}
 			break;
 		case PROC_OPERATOR_GET_ISP:
-			result = IPInfo.getInstance().getIPBlock(value).service;
+			blockInfo = IPInfo.getInstance().getIPBlock(value);
+			if (blockInfo == null) {
+				result = "δ֪";
+			} else {
+				if (blockInfo.province == null)
+					result = "δ֪";
+				else
+					result = blockInfo.service;
+			}
 			break;
 		case PROC_OPERATOR_GET_HOST:
 			result = Utils.getHostByUrl(value);
@@ -134,9 +153,8 @@ public class FieldRelation {
 	}
 		
 	public static void main(String[] args) throws Exception {
-		List<FieldRelation> relations = FieldRelation.valueOf("err_code:[6,abc]");
+		IPBlockInfo blockInfo = IPInfo.getInstance().getIPBlock("118.194.193.135");
 		
-		FieldRelation relation = (FieldRelation)relations.toArray()[0];
-		System.out.println(relation.validate("ab"));
+		System.out.println(blockInfo.country);
 	}
 }

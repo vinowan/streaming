@@ -58,16 +58,16 @@ public class ComputeBolt implements IRichBolt {
 	private AtomicLong currentTs = null;
 	
 	public static class ID {
-		private String stream = null;
+		private String category = null;
 		private Integer itil = null;
 		
-		public ID(String stream, Integer itil) {
-			this.stream = stream;
+		public ID(String category, Integer itil) {
+			this.category = category;
 			this.itil = itil;
 		}
 
-		public String getStream() {
-			return stream;
+		public String getCategory() {
+			return category;
 		}
 
 		public Integer getItil() {
@@ -77,7 +77,7 @@ public class ComputeBolt implements IRichBolt {
 		@Override
 		public int hashCode() {
 			int ret = 17;
-			ret = 37*ret + stream.hashCode();
+			ret = 37*ret + category.hashCode();
 			ret = 37*ret + itil.hashCode();
 			
 			return ret;
@@ -87,7 +87,7 @@ public class ComputeBolt implements IRichBolt {
 		public boolean equals(Object obj) {
 			if (obj instanceof ID) {
 				ID id = (ID)obj;
-				return stream.equals(id.stream) && itil.equals(id.itil);
+				return category.equals(id.category) && itil.equals(id.itil);
 			}
 			
 			return false;
@@ -150,11 +150,13 @@ public class ComputeBolt implements IRichBolt {
 				
 				WarningDataDao wdd = new WarningDataDao(conn);
 				
+				int sqlNum = 0;
+				long beginTs = System.currentTimeMillis();
 				for (Map.Entry<ID, ElementaryArithmetic> entry : itilExprs.entrySet()) {
-					String stream = entry.getKey().getStream();
+					String category = entry.getKey().getCategory();
 					int itil = entry.getKey().getItil();
 					
-					FileRule fileRule = fileRulesRef.get().get(stream);
+					FileRule fileRule = fileRulesRef.get().get(category);
 					ItilRule itemRule = fileRule.getWarningRules().get(itil);
 					
 					double totalResult = entry.getValue().calcResult();
@@ -163,17 +165,18 @@ public class ComputeBolt implements IRichBolt {
 					int totalCount = entry.getValue().getCount();
 					
 					wdd.insertItilMonitor(timestamp, itil, totalResult);
+					sqlNum++;
 					
 					Calendar cal = Calendar.getInstance();
 					cal.setTimeInMillis(timestamp);
 					
 					int hour = cal.get(Calendar.HOUR_OF_DAY);
-					// 如果不需要告警，则继续处理下一个itil
-//					if(!itemRule.getHourMotion().validate(totalResult, hour))
-//						continue;
-					
+					System.out.println("-------hour:"+hour);
+					// 如果不需要告警，则继续处理下一个itil					
 					boolean status = itemRule.getHourMotion().validate(totalResult, hour);
+					System.out.println("-------status:"+status);
 					int recovery = wdd.isSendWarn(itil, status);
+					System.out.println("-------recovery:"+recovery);
 					String recoveryDesc = "";
 					if (recovery > 0) {
 						recoveryDesc = "告警通知";
@@ -188,6 +191,10 @@ public class ComputeBolt implements IRichBolt {
 					wdd.insertSMSWarning(timestamp, itil, itemRule.getItilDesc(), itemRule.getBusiness(), 
 							recoveryDesc, totalResult, range.toString(), itemRule.getReceiver());
 					
+					// 仅当产生告警时做细分分析
+					if (recovery <= 0)
+						continue;
+					
 					HashMap<Dimension, ElementaryArithmetic> segExprs = itilSegExprs.get(entry.getKey());
 					for (Map.Entry<Dimension, ElementaryArithmetic> subEntry : segExprs.entrySet()) {
 						double splitResult = subEntry.getValue().calcResult();
@@ -195,13 +202,19 @@ public class ComputeBolt implements IRichBolt {
 						int splitCount = subEntry.getValue().getCount();
 						
 						double contribRate = itemRule.calcContribRate(hour, splitResult, totalResult, splitCount, totalCount);
+//						System.out.println("+++++" + String.format("%s:%s(%f,%f,%d,%f,%d)", subEntry.getKey().getDimension(), subEntry.getKey().getValue(),
+//								contribRate, splitResult, splitCount, totalResult, totalCount));
 						SegmentRule segRule = fileRule.getSegmentRules().get(subEntry.getKey().getDimension());
 						if (contribRate > segRule.getContribMinRate()) {
 							wdd.insertEMailWarning(timestamp, itil, itemRule.getItilDesc(), subEntry.getKey().getDimension(), subEntry.getKey().getValue(), 
 									splitResult, totalResult, range.toString(), contribRate, itemRule.getReceiver());
+							sqlNum++;
 						}
 					}
 				}
+				long endTs = System.currentTimeMillis();
+				
+				logger.info("dump " + sqlNum + " sql cost " + (endTs - beginTs));
 				
 			} catch (Exception e) {
 				logger.error("failed to write data into db: "
@@ -263,6 +276,8 @@ public class ComputeBolt implements IRichBolt {
 	}
 
 	public void execute(Tuple input) {
+		statics.inPacket.getAndIncrement();
+		
 		if (input.size() < 4) {
 			statics.wrongTuple.getAndIncrement();
 			return;
@@ -272,6 +287,11 @@ public class ComputeBolt implements IRichBolt {
 		int itil = input.getInteger(1);
 		long timestamp = input.getLong(2);
 		String body = input.getString(3);
+		
+//		System.out.println("-------category:" + category);
+//		System.out.println("-------itil:" + itil);
+//		System.out.println("-------timestamp:" + timestamp);
+//		System.out.println("-------body:" + body);
 		
 		// get file rule
 		FileRule fileRule = fileRulesRef.get().get(category);
@@ -294,21 +314,23 @@ public class ComputeBolt implements IRichBolt {
 			return;
 		}
 		
-		ElementaryArithmetic expr = itilExprsRef.get().get(itil);
+		ID id = new ID(category, itil);
+		ElementaryArithmetic expr = itilExprsRef.get().get(id);
 		if (expr == null) {
+//			System.out.println("******itemName" + itemRule.getArithExpr().getItemName());
 			expr = new ElementaryArithmetic(itemRule.getArithExpr()
 					.getItemName());
-			itilExprsRef.get().put(new ID(category, itil), expr);
+			itilExprsRef.get().put(id, expr);
 		}
 
-		expr.compute(itemValues);
+		expr.compute(itemValues, itemRule.getItemRanges());
 
 		// segment
 		HashMap<Dimension, ElementaryArithmetic> segExprs = itilSegExprsRef
-				.get().get(itil);
+				.get().get(id);
 		if (segExprs == null) {
 			segExprs = new HashMap<Dimension, ElementaryArithmetic>();
-			itilSegExprsRef.get().put(new ID(category, itil), segExprs);
+			itilSegExprsRef.get().put(id, segExprs);
 		}
 
 		for (SegmentRule segRule : fileRule.getSegmentRules().values()) {
@@ -317,7 +339,9 @@ public class ComputeBolt implements IRichBolt {
 				statics.dimensionNull.getAndIncrement();
 				continue;
 			}
-
+			
+//			System.out.println("+++++++++" + dimension.toString());
+			
 			expr = segExprs.get(dimension);
 			if (expr == null) {
 				expr = new ElementaryArithmetic(itemRule.getArithExpr()
@@ -325,7 +349,7 @@ public class ComputeBolt implements IRichBolt {
 				segExprs.put(dimension, expr);
 			}
 
-			expr.compute(itemValues);
+			expr.compute(itemValues, itemRule.getItemRanges());
 		}
 	}
 

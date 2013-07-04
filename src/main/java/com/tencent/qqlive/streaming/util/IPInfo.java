@@ -94,7 +94,7 @@ public class IPInfo {
 		if (entry == null)
 			return null;
 		
-		if (entry.getValue().endIP > ip)
+		if (entry.getValue().endIP >= ip)
 			return entry.getValue();
 		
 		return null;

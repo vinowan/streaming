@@ -19,17 +19,18 @@ public class ElementaryArithmetic {
 	public static final Operator DIV_OPERATOR = new Operator('/', 2);
 	
 	private String itemName = null;
-
+	
 	private List<String> infixNotation = null;
 	private List<String> postfixNotation = null;
 	
-	private int count = 0;
-	
 	// token -> Operand, 函数compute和calcResult被不同的线程调用
 	private AtomicReference<HashMap<String, Operand>> operandsRef = new AtomicReference<HashMap<String, Operand>>();
+	
+	private int count = 0;
 		
 	public ElementaryArithmetic(String itemName) {
 		this.itemName = itemName;
+		
 		infixNotation = tokenizer(itemName);
 		postfixNotation = toPostfix(infixNotation);
 		
@@ -52,7 +53,7 @@ public class ElementaryArithmetic {
 		return count;
 	}
 
-	public void compute(Map<String, String> itemValues) {
+	public void compute(Map<String, String> itemValues, Map<String, ItemRange> itemRanges) {
 		for (Map.Entry<String, Operand> entry : operandsRef.get().entrySet()) {
 			String name = entry.getKey();
 			if (name.startsWith("[") && name.endsWith("]"))
@@ -62,10 +63,16 @@ public class ElementaryArithmetic {
 			if (value == null)
 				continue;
 			
-			// 表达式中的值都认为是Long类型
-			entry.getValue().compute(Long.valueOf(value));
+			// 表达式中的值都认为是Double类型
+			double dVal = Double.valueOf(value);
+			ItemRange range = itemRanges.get(name);
+			if (range != null && !range.validate(dVal))
+				continue;
+			
+			entry.getValue().compute(dVal);
+//			System.out.println("******Operand:" + entry.getValue().getName() + "|" + entry.getValue().getValue());
 		}
-		count++;
+		
 	}
 	
 	public double calcResult() {
@@ -82,7 +89,9 @@ public class ElementaryArithmetic {
 				if (val == null) {
 					resultStack.push(0.0);
 				} else {
-					resultStack.push((double)val.getValue());
+					resultStack.push(val.getValue());
+					if (count < val.getCount())
+						count = val.getCount();
 				}
 			} else {
 				double rhs = resultStack.pop();
@@ -189,24 +198,38 @@ public class ElementaryArithmetic {
 	}
 	
 	public static void main(String[] args) {
+		Map<String, ItemRange> itemRanges = new HashMap<String, ItemRange>();
+		ItemRange hspeedRange = new ItemRange();
+		hspeedRange.setItem("hspeed");
+		hspeedRange.setMin(1);
+		hspeedRange.setMax(3);
+		itemRanges.put("hspeed", hspeedRange);
+		
+		ItemRange uspeedRange = new ItemRange();
+		uspeedRange.setItem("uspeed");
+		uspeedRange.setMin(2);
+		uspeedRange.setMax(4);
+		itemRanges.put("uspeed", uspeedRange);
+		
 		ElementaryArithmetic ea = new ElementaryArithmetic("(hspeed + uspeed) / [hspeed]");
 		
 		Map<String, String> itemValues = new HashMap<String, String>();
 		itemValues.put("hspeed", "2");
-		itemValues.put("uspeed", "1");
-		ea.compute(itemValues);
+		itemValues.put("uspeed", "3");
+		ea.compute(itemValues, itemRanges);
 		
 		itemValues.clear();
 		itemValues.put("hspeed", "3");
-		itemValues.put("uspeed", "2");
-		ea.compute(itemValues);
+		itemValues.put("uspeed", "5");
+		ea.compute(itemValues, itemRanges);
 		
 		System.out.println(ea.calcResult());
+		System.out.println(ea.getCount());
 		
-		itemValues.clear();
-		itemValues.put("hspeed", "3");
-		itemValues.put("uspeed", "2");
-		ea.compute(itemValues);
-		System.out.println(ea.calcResult());
+//		itemValues.clear();
+//		itemValues.put("hspeed", "3");
+//		itemValues.put("uspeed", "2");
+//		ea.compute(itemValues, itemRanges);
+//		System.out.println(ea.calcResult());
 	}
 }

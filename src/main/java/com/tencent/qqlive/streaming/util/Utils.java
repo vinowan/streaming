@@ -64,9 +64,13 @@ public class Utils {
 			return url;
 		} else {
 			int bIdx = url.indexOf("http://");
-			int eIdx = url.indexOf("/", bIdx + 8);
+			if (bIdx == -1)
+				bIdx = -7;
+			int eIdx = url.indexOf("/", bIdx + 7);
+			if (eIdx == -1)
+				eIdx = url.length();
 			
-			return url.substring(bIdx + 8, eIdx);
+			return url.substring(bIdx + 7, eIdx);
 		}
 	}
 	
@@ -108,7 +112,6 @@ public class Utils {
 	}
 	
 	public static void main(String[] args) {
-		String[] strArray = {"a", "b", "c"};
-		System.out.println(join(strArray, ","));
+		System.out.println(getHostByUrl("file://a.b.c.d"));
 	}
 }

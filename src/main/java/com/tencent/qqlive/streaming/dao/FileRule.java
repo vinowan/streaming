@@ -30,7 +30,7 @@ public class FileRule {
 	public Set<String> getExprs() {
 		if (exprs != null)
 			return exprs;
-		
+
 		exprs = new HashSet<String>();
 		for (Map.Entry<Integer, ItilRule> entry : warningRules.entrySet()) {
 			exprs.addAll(entry.getValue().getExpression());

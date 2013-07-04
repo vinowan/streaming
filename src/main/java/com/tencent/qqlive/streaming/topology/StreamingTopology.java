@@ -2,8 +2,12 @@ package com.tencent.qqlive.streaming.topology;
 
 import java.util.Properties;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import backtype.storm.Config;
 import backtype.storm.LocalCluster;
+import backtype.storm.StormSubmitter;
 import backtype.storm.topology.TopologyBuilder;
 import backtype.storm.tuple.Fields;
 
@@ -11,7 +15,9 @@ import com.tencent.qqlive.streaming.bolt.ComputeBolt;
 import com.tencent.qqlive.streaming.spout.CollectorSpout;
 
 public class StreamingTopology {
-	public static final String STREAM_ID = "streaming"; 
+	public static final String STREAM_ID = "streaming";
+	
+	private static Logger logger = LoggerFactory.getLogger(StreamingTopology.class);
 	
 	public static void main(String[] args) throws Exception {
 		if (args.length < 1) {
@@ -27,39 +33,33 @@ public class StreamingTopology {
 			conf.put(key, prop.getProperty(key));
 		}
 		
-		conf.setNumWorkers(1);
+		conf.setNumWorkers(12);
 		conf.setNumAckers(0);
-		
-//		String dbHost = (String) conf.get("db.host");
-//		String dbPort = (String) conf.get("db.port");
-//		String dbUser = (String) conf.get("db.user");
-//		String dbPwd = (String) conf.get("db.password");
-//		
-//		if (dbHost == null || dbPort == null || dbUser == null
-//				|| dbPwd == null)
-//			throw new RuntimeException("failed to load db config");
-//		
-//		DatabaseConnection dbc = new DatabaseConnection(dbHost, dbPort,
-//				dbUser, dbPwd);
-//		
-//		Connection conn = dbc.getConn();
-//
-//		WarningConfigDao wcd = new WarningConfigDao(conn);
-//		
-//		List<String> statsFile = wcd.getAllStatsFiles();
 		
 		TopologyBuilder builder = new TopologyBuilder();
 		
-		builder.setSpout(CollectorSpout.COMPONENT_NAME, new CollectorSpout(), 1);
-		builder.setBolt(ComputeBolt.COMPONENT_NAME, new ComputeBolt(), 1)
+		builder.setSpout(CollectorSpout.COMPONENT_NAME, new CollectorSpout(), 8);
+		builder.setBolt(ComputeBolt.COMPONENT_NAME, new ComputeBolt(), 16)
 			.fieldsGrouping(CollectorSpout.COMPONENT_NAME, STREAM_ID, new Fields("itil"));
 		
+		String mode = (String)conf.get("system.mode");
+		if (mode == null 
+				|| mode.equals("")) {
+			mode = "distribute";
+		}
 		
-//		StormSubmitter.submitTopology("Streaming", conf, builder.createTopology());
-		LocalCluster cluster = new LocalCluster();
-		cluster.submitTopology("Streaming", conf, builder.createTopology());
-		Thread.currentThread().sleep(10000);
-		cluster.shutdown();
+		if (mode.equalsIgnoreCase("distribute")) {
+			logger.info("topology running in distribute mode");
+			
+			StormSubmitter.submitTopology("Streaming", conf, builder.createTopology());
+		} else {
+			logger.info("topology running in local mode");
+			
+			LocalCluster cluster = new LocalCluster();
+			cluster.submitTopology("Streaming", conf, builder.createTopology());
+			Thread.sleep(70000);
+			cluster.shutdown();
+		}	
 	}
 	
 }

@@ -96,13 +96,13 @@ public class WarningConfigDao {
 				List<FieldRelation> fieldRelations = FieldRelation.valueOf(rs.getString(10));
 				wr.setFieldRelations(fieldRelations);
 				
-				HourMotion hourMotion = HourMotion.valueOf(rs.getString(11));
+				HourMotion hourMotion = HourMotion.valueOf(rs.getString(12));
 				wr.setHourMotion(hourMotion);
 				
-				int msgWarnPeriod = rs.getInt(13);
+				int msgWarnPeriod = rs.getInt(14);
 				wr.setMsgWarnPeriod(msgWarnPeriod);
 				
-				int maxWarnCount = rs.getInt(14);
+				int maxWarnCount = rs.getInt(15);
 				wr.setMaxWarnCount(maxWarnCount);
 				
 				result.put(itilID, wr);
@@ -126,15 +126,19 @@ public class WarningConfigDao {
 		
 		Map<String, SegmentRule> result = new HashMap<String, SegmentRule>();
 		while(rs.next()) {
-			SegmentRule lr = new SegmentRule();
-			
-			List<SegmentRule.Segment> rules = SegmentRule.Segment.valueof(rs.getString(2));
-			lr.setRules(rules);
-			
-			double contribMinRate = rs.getDouble(3);
-			lr.setContribMinRate(contribMinRate);
-			
-			result.put(lr.getDimension(null).getDimension(), lr);
+			try {
+				SegmentRule lr = new SegmentRule();
+				
+				List<SegmentRule.Segment> rules = SegmentRule.Segment.valueof(rs.getString(2));
+				lr.setRules(rules);
+				
+				double contribMinRate = rs.getDouble(3);
+				lr.setContribMinRate(contribMinRate);
+				
+				result.put(lr.getDimension(null).getDimension(), lr);
+			} catch (Exception e) {
+				logger.error("failed to parse: " + Utils.stringifyException(e));
+			}
 		}
 		
 		return result;
