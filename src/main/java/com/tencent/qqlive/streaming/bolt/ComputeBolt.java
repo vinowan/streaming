@@ -171,12 +171,12 @@ public class ComputeBolt implements IRichBolt {
 					cal.setTimeInMillis(timestamp);
 					
 					int hour = cal.get(Calendar.HOUR_OF_DAY);
-					System.out.println("-------hour:"+hour);
+//					System.out.println("-------hour:"+hour);
 					// 如果不需要告警，则继续处理下一个itil					
 					boolean status = itemRule.getHourMotion().validate(totalResult, hour);
-					System.out.println("-------status:"+status);
+//					System.out.println("-------status:"+status);
 					int recovery = wdd.isSendWarn(itil, status);
-					System.out.println("-------recovery:"+recovery);
+//					System.out.println("-------recovery:"+recovery);
 					String recoveryDesc = "";
 					if (recovery > 0) {
 						recoveryDesc = "告警通知";

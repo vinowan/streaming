@@ -210,11 +210,11 @@ public class CollectorSpout implements IRichSpout {
 		}
 		
 		LogEntry log = parseEvent(event);
-//		if (log == null 
-//				|| System.currentTimeMillis() - log.getTimestamp() > 30 * 60 * 1000 ) {
-//			statics.timeoutPacket.getAndIncrement();
-//			return;
-//		}
+		if (log == null 
+				|| System.currentTimeMillis() - log.getTimestamp() > 30 * 60 * 1000 ) {
+			statics.timeoutPacket.getAndIncrement();
+			return;
+		}
 		
 		for (Map.Entry<Integer, ItilRule> entry : fr.getWarningRules().entrySet()) {
 			if (entry.getValue().validate(log)) {
