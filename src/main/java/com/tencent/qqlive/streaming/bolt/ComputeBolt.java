@@ -374,6 +374,9 @@ public class ComputeBolt implements IRichBolt {
 		String[] items = body.split("\\s+");
 		for (String item : items) {
 			String[] key_value = item.split("\\s*=\\s*");
+			if (key_value.length != 2)
+				continue;
+			
 			itemValues.put(key_value[0], key_value[1]);
 		}
 		
