@@ -7,13 +7,13 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,13 +29,17 @@ import com.tencent.qqlive.streaming.util.Utils;
 import com.tencent.qqlive.streaming.util.ZkClient;
 
 public class MultiDevVodCountBolt implements IRichBolt {
+	private static final long serialVersionUID = 8541321114425153335L;
+
 	private static final Logger logger = LoggerFactory.getLogger(MultiDevVodCountBolt.class);
 	
 	private OutputCollector collector = null;
 	private Map conf = null;
 	private TopologyContext context = null;
 	
-	private ConcurrentMap<LogEntry, Integer> results = null;
+//	private ConcurrentMap<LogEntry, Integer> results = null;
+	private AtomicReference<HashMap<LogEntry, Integer>> resultsRef = null;
+	
 	private ScheduledExecutorService executor = null;
 	private ZkClient zkc = null;
 	private Connection conn = null;
@@ -61,7 +65,8 @@ public class MultiDevVodCountBolt implements IRichBolt {
 		
 		statics = new BoltStatics();
 		
-		results = new ConcurrentHashMap<LogEntry, Integer>();
+		resultsRef = new AtomicReference<HashMap<LogEntry, Integer>>();
+		resultsRef.set(new HashMap<LogEntry, Integer>());
 		
 		String zkHost = (String)conf.get("zk.host");
 		String zkPath = (String)conf.get("zk.path");
@@ -124,6 +129,7 @@ public class MultiDevVodCountBolt implements IRichBolt {
 					
 					statics.reset();
 					
+					HashMap<LogEntry, Integer> results = resultsRef.getAndSet(new HashMap<LogEntry, Integer>());
 					// connect to db
 					String dbUrl = String.format("jdbc:mysql://%s:%s/", dbHost, dbPort);
 					try {
@@ -154,8 +160,7 @@ public class MultiDevVodCountBolt implements IRichBolt {
 							
 							logger.info("execute sql: " + statement.toString());
 						}
-						
-						results.clear();
+										
 						conn.close();
 					} catch (SQLException e) {
 						logger.error("failed to execute sql: " + Utils.stringifyException(e));
@@ -190,10 +195,12 @@ public class MultiDevVodCountBolt implements IRichBolt {
 		entry.setDevtype(devtype);
 		entry.setTimestamp(timestamp);
 		
-		Integer count = results.putIfAbsent(entry, 1);
-		if (count != null) {
-			results.replace(entry, count + 1);
+		Integer count = resultsRef.get().get(entry);
+		if (count == null) {
+			count = new Integer(0);
+			resultsRef.get().put(entry, count);
 		}
+		resultsRef.get().put(entry, count + 1);
 	}
 
 	public void cleanup() {

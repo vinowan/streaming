@@ -35,6 +35,8 @@ import com.tencent.qqlive.streaming.util.Utils;
 import com.tencent.qqlive.streaming.util.ZkClient;
 
 public class HinaSourceSpout implements IRichSpout {
+	private static final long serialVersionUID = 8816829917554423605L;
+
 	private static final Logger logger = LoggerFactory
 			.getLogger(HinaSourceSpout.class);
 
@@ -164,16 +166,18 @@ public class HinaSourceSpout implements IRichSpout {
 						logger.error("failed to execute sql: "
 								+ Utils.stringifyException(e));
 					}
-
-					playIdsRef.set(playIds);
-					albumIdsRef.set(albumIds);
+					
+					if (playIds.size() > 0)
+						playIdsRef.set(playIds);
+					if (albumIds.size() > 0)
+						albumIdsRef.set(albumIds);
 					
 					latch.countDown();
 				}
 
 			}, 0, Integer.valueOf(reloadIntervalStr), TimeUnit.SECONDS);
 
-			logger.debug("waiting for loading playid from database");
+			logger.info("waiting for loading playid from database");
 			latch.await();
 
 			server = new HinaSourceServer(messageQueue, statics);
