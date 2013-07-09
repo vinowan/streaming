@@ -192,12 +192,17 @@ public class SegmentRule {
 			
 			if (itemValues != null) {
 				String val = itemValues.get(seg.getItemName());
-				if (val == null)
+				if (val == null) {
+//					System.out.println("no val for 1" + seg.getItemName());
 					return null;
+				}
+//					throw new RuntimeException("no val for " + seg.getItemName());
 				
 				valArray[i] = seg.getValue(val);
-				if (valArray[i] == null)
+				if (valArray[i] == null) {
+//					System.out.println("no val for 2" + seg.getItemName());
 					return null;
+				}
 			}
 			i++;
 		}

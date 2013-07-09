@@ -42,6 +42,12 @@ public class FileRule {
 			}
 		}
 		
+//		StringBuilder sb = new StringBuilder();
+//		for (String expr : exprs) {
+//			sb.append(expr);
+//			sb.append(",");
+//		}
+//		System.out.println("#####expr:"+sb.toString());
 		return exprs;
 	}	
 }

@@ -29,7 +29,7 @@ public class WarningDataDao {
 		String tableName = "t_monitor_" + tsStr;
 		
 		Statement statement = conn.createStatement();
-		String sql = String.format("insert into d_data_manager.%s values(from_unixtime(%d), %.2f, %d)", tableName, timestamp/1000, result, itilID);
+		String sql = String.format("insert into d_real_time_statis_data.%s values(from_unixtime(%d), %.2f, %d)", tableName, timestamp/1000, result, itilID);
 		logger.debug("execute sql: " + sql);
 		System.out.println(sql);
 		
@@ -46,7 +46,7 @@ public class WarningDataDao {
 		String tsStr = formatter.format(date);
 		
 		Statement statement = conn.createStatement();
-		String sql = String.format("insert into d_data_manager.t_real_data_sms_warn(f_time, f_itil_id, f_itil_desc, f_business, f_recovery_desc, f_value, f_range, f_msg_recver) " +
+		String sql = String.format("insert into d_real_time_statis_data.t_real_data_sms_warn(f_time, f_itil_id, f_itil_desc, f_business, f_recovery_desc, f_value, f_range, f_msg_recver) " +
 				"values('%s', %d, '%s', '%s', '%s', %.2f, '%s', '%s')", tsStr, itilID, itilDesc, bussiness, recoveryDesc, result, range, receiver);
 		logger.debug("execute sql: " + sql);
 		System.out.println(sql);
@@ -64,7 +64,7 @@ public class WarningDataDao {
 		String tsStr = formatter.format(date);
 		
 		Statement statement = conn.createStatement();
-		String sql = String.format("insert into d_data_manager.t_real_data_email_warn(f_time, f_itil_id, f_itil_desc, f_category_desc, f_category_value, f_category_result, f_total_result, f_range, f_contribution, f_msg_recver) " +
+		String sql = String.format("insert into d_real_time_statis_data.t_real_data_email_warn(f_time, f_itil_id, f_itil_desc, f_category_desc, f_category_value, f_category_result, f_total_result, f_range, f_contribution, f_msg_recver) " +
 				"values('%s', %d, '%s', '%s', '%s', %.2f, %.2f, '%s', %.2f, '%s')", 
 				tsStr, itilID, itilDesc, categoryDesc, categoryVal, categoryRes, totoalResult, range, contribution, receiver);
 		logger.debug("execute sql: " + sql);
@@ -91,7 +91,7 @@ public class WarningDataDao {
 		String sql = null;
 		if (status) {
 			sql = String.format("select f_warn_start_time " +
-					"from d_data_manager.t_monitor_warn_recovery " +
+					"from d_real_time_statis_data.t_monitor_warn_recovery " +
 					"where f_itil_id = %d and  f_warn_start_time <> '' " +
 					"and f_warn_stop_time is null " +
 					"order by f_warn_start_time desc limit 1", itilID);
@@ -104,7 +104,7 @@ public class WarningDataDao {
 			} else {
 				result = 1;
 				
-				sql = String.format("insert into d_data_manager.t_monitor_warn_recovery(f_itil_id, f_warn_start_time) values(%d, now())", itilID);
+				sql = String.format("insert into d_real_time_statis_data.t_monitor_warn_recovery(f_itil_id, f_warn_start_time) values(%d, now())", itilID);
 				
 				logger.debug("execute sql: " + sql);
 				
@@ -112,7 +112,7 @@ public class WarningDataDao {
 			}
 		} else {
 			sql = String.format("select f_warn_start_time " +
-					"from d_data_manager.t_monitor_warn_recovery " +
+					"from d_real_time_statis_data.t_monitor_warn_recovery " +
 					"where f_itil_id = %d and  f_warn_start_time <> '' " +
 					"and f_warn_stop_time is null " +
 					"order by f_warn_start_time desc limit 1"
@@ -126,7 +126,7 @@ public class WarningDataDao {
 			} else {
 				result = -1;
 				
-				sql = String.format("update d_data_manager.t_monitor_warn_recovery set f_warn_stop_time  = now() " +
+				sql = String.format("update d_real_time_statis_data.t_monitor_warn_recovery set f_warn_stop_time  = now() " +
 						"where f_itil_id = %d and f_warn_stop_time is null", itilID);
 				
 				logger.debug("execute sql: " + sql);

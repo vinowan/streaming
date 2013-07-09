@@ -10,6 +10,12 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.tencent.qqlive.streaming.bolt.ComputeBolt;
+import com.tencent.qqlive.streaming.util.Utils;
+
 public class ElementaryArithmetic {
 	public static final Operator LEFT_BRACKES = new Operator('(', 0);
 	public static final Operator RIGHT_BRACKES = new Operator(')', 0);
@@ -17,6 +23,8 @@ public class ElementaryArithmetic {
 	public static final Operator SUB_OPERATOR = new Operator('-', 1);
 	public static final Operator MUL_OPERATOR = new Operator('*', 2);
 	public static final Operator DIV_OPERATOR = new Operator('/', 2);
+	
+	private static final Logger logger = LoggerFactory.getLogger(ElementaryArithmetic.class);
 	
 	private String itemName = null;
 	
@@ -64,7 +72,12 @@ public class ElementaryArithmetic {
 				continue;
 			
 			// 表达式中的值都认为是Double类型
-			double dVal = Double.valueOf(value);
+			double dVal = 0.0;
+			try {
+				dVal = Double.valueOf(value);
+			} catch (NumberFormatException e) {
+				logger.error(Utils.stringifyException(e));
+			}
 			ItemRange range = itemRanges.get(name);
 			if (range != null && !range.validate(dVal))
 				continue;

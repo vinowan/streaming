@@ -27,7 +27,7 @@ public class WarningConfigDao {
 		Statement statement = conn.createStatement();
 //		statement.executeUpdate("set names gbk");
 		
-		String sql = "select distinct f_log_file_name from d_auto_statistic.t_cmd";
+		String sql = "select distinct f_log_file_name from d_real_time_statis_conf.t_cmd";
 		logger.info("execute Query: " + sql);
 		
 		ResultSet rs = statement.executeQuery(sql);
@@ -47,6 +47,7 @@ public class WarningConfigDao {
 		result.setSegmentRules(getSegmentRuleForFile(file));
 		result.getExprs(); // eagerly init
 		
+		
 		return result;
 	}
 	
@@ -54,8 +55,8 @@ public class WarningConfigDao {
 		Statement statement = conn.createStatement();
 //		statement.executeUpdate("set names gbk");
 		
-		String sql = "select * from d_auto_statistic.t_real_data_warn_config " +
-				"where f_log_id in (select f_log_id from d_auto_statistic.t_cmd where f_log_file_name = \"" + file + "\")";
+		String sql = "select * from d_real_time_statis_conf.t_real_data_warn_config " +
+				"where f_log_id in (select f_log_id from d_real_time_statis_conf.t_cmd where f_log_file_name = \"" + file + "\")";
 		logger.info("execute Query: " + sql);
 		
 		ResultSet rs = statement.executeQuery(sql);
@@ -118,8 +119,8 @@ public class WarningConfigDao {
 		Statement statement = conn.createStatement();
 //		statement.executeUpdate("set names gbk");
 		
-		String sql = "select * from d_auto_statistic.t_real_data_warn_segment_config " +
-				"where f_log_id in (select f_log_id from d_auto_statistic.t_cmd where f_log_file_name = \"" + file + "\")";
+		String sql = "select * from d_real_time_statis_conf.t_real_data_warn_segment_config " +
+				"where f_log_id in (select f_log_id from d_real_time_statis_conf.t_cmd where f_log_file_name = \"" + file + "\")";
 		logger.info("execute Query: " + sql);
 		
 		ResultSet rs = statement.executeQuery(sql);

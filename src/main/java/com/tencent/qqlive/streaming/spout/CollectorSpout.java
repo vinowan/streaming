@@ -234,7 +234,10 @@ public class CollectorSpout implements IRichSpout {
 				tuple.add(Utils.join(body, "\t"));
 				
 				collector.emit(StreamingTopology.STREAM_ID, tuple);
-				statics.emitStream.getAndIncrement();			
+//				statics.emitStream.getAndIncrement();	
+				statics.getStatics(event.getCategory()).emitStream.getAndIncrement();
+			} else {
+				statics.getStatics(event.getCategory()).noValidStream.getAndIncrement();
 			}
 		}
 	}
@@ -283,7 +286,7 @@ public class CollectorSpout implements IRichSpout {
 		try {
 			date = formatter.parse(timestamp);
 		} catch (ParseException e) {
-			logger.warn("failed to parse timestamp: "
+			logger.warn("failed to parse "+ event.getCategory() +" timestamp: "
 					+ Utils.stringifyException(e));
 			return null;
 		}

@@ -272,18 +272,22 @@ public class ComputeBolt implements IRichBolt {
 		}
 		
 		dumpInterval = Config.getInt(conf, "dump.interval", 300);
-		executor.scheduleAtFixedRate(new DataDumper(), 0, dumpInterval, TimeUnit.SECONDS);
+		int initialDelay = dumpInterval - (int)(System.currentTimeMillis()/1000) % dumpInterval;
+		
+		executor.scheduleAtFixedRate(new DataDumper(), initialDelay, dumpInterval, TimeUnit.SECONDS);
 	}
 
 	public void execute(Tuple input) {
-		statics.inPacket.getAndIncrement();
+		String category = input.getString(0);
+		
+		statics.getStatics(category).inPacket.getAndIncrement();
 		
 		if (input.size() < 4) {
-			statics.wrongTuple.getAndIncrement();
+			statics.getStatics(category).wrongTuple.getAndIncrement();
 			return;
 		}
 		
-		String category = input.getString(0);
+		
 		int itil = input.getInteger(1);
 		long timestamp = input.getLong(2);
 		String body = input.getString(3);
@@ -296,7 +300,7 @@ public class ComputeBolt implements IRichBolt {
 		// get file rule
 		FileRule fileRule = fileRulesRef.get().get(category);
 		if (fileRule == null) {
-			statics.wrongCategory.getAndIncrement();
+			statics.getStatics(category).wrongCategory.getAndIncrement();
 			return;
 		}
 		
@@ -310,7 +314,7 @@ public class ComputeBolt implements IRichBolt {
 		// total
 		ItilRule itemRule = fileRule.getWarningRules().get(itil);
 		if (itemRule == null) {
-			statics.wrongItil.getAndIncrement();
+			statics.getStatics(category).wrongItil.getAndIncrement();
 			return;
 		}
 		
@@ -336,7 +340,7 @@ public class ComputeBolt implements IRichBolt {
 		for (SegmentRule segRule : fileRule.getSegmentRules().values()) {
 			Dimension dimension = segRule.getDimension(itemValues);
 			if (dimension == null) {
-				statics.dimensionNull.getAndIncrement();
+				statics.getStatics(category).dimensionNull.getAndIncrement();
 				continue;
 			}
 			
@@ -373,7 +377,7 @@ public class ComputeBolt implements IRichBolt {
 		
 		String[] items = body.split("\\s+");
 		for (String item : items) {
-			String[] key_value = item.split("\\s*=\\s*");
+			String[] key_value = item.split("\\s*=\\s*", 2);
 			if (key_value.length != 2)
 				continue;
 			
