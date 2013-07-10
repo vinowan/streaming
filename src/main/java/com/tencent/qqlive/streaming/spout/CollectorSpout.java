@@ -33,7 +33,7 @@ import com.tencent.qqlive.streaming.dao.ItilRule;
 import com.tencent.qqlive.streaming.dao.LogEntry;
 import com.tencent.qqlive.streaming.dao.WarningConfigDao;
 import com.tencent.qqlive.streaming.topology.StreamingTopology;
-import com.tencent.qqlive.streaming.util.Config;
+import com.tencent.qqlive.streaming.util.ConfigUtils;
 import com.tencent.qqlive.streaming.util.Utils;
 import com.tencent.qqlive.streaming.util.ZkClient;
 
@@ -110,7 +110,7 @@ public class CollectorSpout implements IRichSpout {
 		statics = new SpoutStatics("CollectorSpout " + context.getThisTaskId());
 		
 //		int statsInterval = Integer.valueOf((String)conf.get("stats.interval"));
-		int statsInterval = Config.getInt(conf, "stats.interval", 30);
+		int statsInterval = ConfigUtils.getInt(conf, "stats.interval", 30);
 		executor.scheduleAtFixedRate(statics, 0, statsInterval, TimeUnit.SECONDS);
 		
 		// load db config
@@ -126,7 +126,7 @@ public class CollectorSpout implements IRichSpout {
 		latch = new CountDownLatch(1);
 		
 //		int reloadInterval = Integer.valueOf((String)conf.get("reload.interval"));
-		int reloadInterval = Config.getInt(conf, "reload.interval", 300);
+		int reloadInterval = ConfigUtils.getInt(conf, "reload.interval", 300);
 		
 		fileRulesRef = new AtomicReference<HashMap<String,FileRule>>();
 		

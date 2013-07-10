@@ -128,15 +128,16 @@ public class WarningConfigDao {
 		Map<String, SegmentRule> result = new HashMap<String, SegmentRule>();
 		while(rs.next()) {
 			try {
-				SegmentRule lr = new SegmentRule();
+				SegmentRule segRule = new SegmentRule();
 				
+//				System.out.println("------" + rs.getString(2));
 				List<SegmentRule.Segment> rules = SegmentRule.Segment.valueof(rs.getString(2));
-				lr.setRules(rules);
+				segRule.setRules(rules);
 				
 				double contribMinRate = rs.getDouble(3);
-				lr.setContribMinRate(contribMinRate);
+				segRule.setContribMinRate(contribMinRate);
 				
-				result.put(lr.getDimension(null).getDimension(), lr);
+				result.put(segRule.getDimension(null).getDimension(), segRule);
 			} catch (Exception e) {
 				logger.error("failed to parse: " + Utils.stringifyException(e));
 			}

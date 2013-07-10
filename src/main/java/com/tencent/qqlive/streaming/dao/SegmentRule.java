@@ -1,6 +1,5 @@
 package com.tencent.qqlive.streaming.dao;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
@@ -87,7 +86,8 @@ public class SegmentRule {
 			
 			try {
 				sResult = URLDecoder.decode(sResult, "utf8");
-			} catch (UnsupportedEncodingException e) {
+			} catch (Exception e) {
+				e.printStackTrace();
 				return sResult;
 			}
 			
@@ -220,6 +220,6 @@ public class SegmentRule {
 		seg.setItemName("vodaddr");
 		seg.setOperation(Segment.OPERATION_TYPE_GET_PROV);
 		
-		System.out.println(seg.getValue("192.168.0.1"));
+		System.out.println(seg.getValue("180.153.212.182"));
 	}
 }

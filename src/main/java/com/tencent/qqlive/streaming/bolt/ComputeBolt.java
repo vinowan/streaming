@@ -30,7 +30,7 @@ import com.tencent.qqlive.streaming.dao.SegmentRule;
 import com.tencent.qqlive.streaming.dao.SegmentRule.Dimension;
 import com.tencent.qqlive.streaming.dao.WarningConfigDao;
 import com.tencent.qqlive.streaming.dao.WarningDataDao;
-import com.tencent.qqlive.streaming.util.Config;
+import com.tencent.qqlive.streaming.util.ConfigUtils;
 import com.tencent.qqlive.streaming.util.Utils;
 
 public class ComputeBolt implements IRichBolt {
@@ -205,6 +205,7 @@ public class ComputeBolt implements IRichBolt {
 //						System.out.println("+++++" + String.format("%s:%s(%f,%f,%d,%f,%d)", subEntry.getKey().getDimension(), subEntry.getKey().getValue(),
 //								contribRate, splitResult, splitCount, totalResult, totalCount));
 						SegmentRule segRule = fileRule.getSegmentRules().get(subEntry.getKey().getDimension());
+//						System.out.println("++++++++" + subEntry.getKey().getDimension() + ":" + segRule.getContribMinRate());
 						if (contribRate > segRule.getContribMinRate()) {
 							wdd.insertEMailWarning(timestamp, itil, itemRule.getItilDesc(), subEntry.getKey().getDimension(), subEntry.getKey().getValue(), 
 									splitResult, totalResult, range.toString(), contribRate, itemRule.getReceiver());
@@ -237,7 +238,7 @@ public class ComputeBolt implements IRichBolt {
 
 		// stats
 		statics = new BoltStatics("ComputeBolt " + context.getThisTaskId());
-		int statsInterval = Config.getInt(conf, "stats.interval", 30);
+		int statsInterval = ConfigUtils.getInt(conf, "stats.interval", 30);
 		executor.scheduleAtFixedRate(statics, 0, statsInterval,
 				TimeUnit.SECONDS);
 
@@ -252,7 +253,7 @@ public class ComputeBolt implements IRichBolt {
 
 		latch = new CountDownLatch(1);
 
-		int reloadInterval = Config.getInt(conf, "reload.interval", 300);
+		int reloadInterval = ConfigUtils.getInt(conf, "reload.interval", 300);
 		
 		fileRulesRef = new AtomicReference<HashMap<String,FileRule>>();
 
@@ -271,7 +272,7 @@ public class ComputeBolt implements IRichBolt {
 					+ dbHost);
 		}
 		
-		dumpInterval = Config.getInt(conf, "dump.interval", 300);
+		dumpInterval = ConfigUtils.getInt(conf, "dump.interval", 300);
 		int initialDelay = dumpInterval - (int)(System.currentTimeMillis()/1000) % dumpInterval;
 		
 		executor.scheduleAtFixedRate(new DataDumper(), initialDelay, dumpInterval, TimeUnit.SECONDS);

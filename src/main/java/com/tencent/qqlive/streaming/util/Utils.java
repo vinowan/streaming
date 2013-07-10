@@ -75,6 +75,9 @@ public class Utils {
 	}
 	
 	public static String getProgVid(String url) {
+		if (url.length() < 1)
+			return "";
+		
 		int eIdx = url.indexOf("?");
 		if (eIdx == -1)
 			eIdx = url.length();

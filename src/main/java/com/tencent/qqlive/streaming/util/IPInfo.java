@@ -61,7 +61,7 @@ public class IPInfo {
 		
 		BufferedReader reader = null;
 		try {
-			reader = new BufferedReader(new InputStreamReader(input));
+			reader = new BufferedReader(new InputStreamReader(input, "GBK"));
 			
 			String line = null;
 			while ((line = reader.readLine()) != null) {

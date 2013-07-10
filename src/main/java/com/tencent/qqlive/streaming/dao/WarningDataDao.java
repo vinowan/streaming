@@ -1,5 +1,8 @@
 package com.tencent.qqlive.streaming.dao;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -14,7 +17,7 @@ public class WarningDataDao {
 	private static final Logger logger = LoggerFactory.getLogger(WarningConfigDao.class);
 	
 	private Connection conn = null;
-
+	
 	public WarningDataDao(Connection conn) {
 		this.conn = conn;
 	}
@@ -30,9 +33,8 @@ public class WarningDataDao {
 		
 		Statement statement = conn.createStatement();
 		String sql = String.format("insert into d_real_time_statis_data.%s values(from_unixtime(%d), %.2f, %d)", tableName, timestamp/1000, result, itilID);
-		logger.debug("execute sql: " + sql);
-		System.out.println(sql);
-		
+		logger.info("execute sql: " + sql);
+	
 		statement.executeUpdate(sql);
 	}
 	
@@ -48,8 +50,7 @@ public class WarningDataDao {
 		Statement statement = conn.createStatement();
 		String sql = String.format("insert into d_real_time_statis_data.t_real_data_sms_warn(f_time, f_itil_id, f_itil_desc, f_business, f_recovery_desc, f_value, f_range, f_msg_recver) " +
 				"values('%s', %d, '%s', '%s', '%s', %.2f, '%s', '%s')", tsStr, itilID, itilDesc, bussiness, recoveryDesc, result, range, receiver);
-		logger.debug("execute sql: " + sql);
-		System.out.println(sql);
+		logger.info("execute sql: " + sql);
 		
 		statement.executeUpdate(sql);
 	}
@@ -67,8 +68,7 @@ public class WarningDataDao {
 		String sql = String.format("insert into d_real_time_statis_data.t_real_data_email_warn(f_time, f_itil_id, f_itil_desc, f_category_desc, f_category_value, f_category_result, f_total_result, f_range, f_contribution, f_msg_recver) " +
 				"values('%s', %d, '%s', '%s', '%s', %.2f, %.2f, '%s', %.2f, '%s')", 
 				tsStr, itilID, itilDesc, categoryDesc, categoryVal, categoryRes, totoalResult, range, contribution, receiver);
-		logger.debug("execute sql: " + sql);
-		System.out.println(sql);
+		logger.info("execute sql: " + sql);
 		
 		statement.executeUpdate(sql);
 	}

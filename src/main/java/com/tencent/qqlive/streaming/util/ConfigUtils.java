@@ -2,7 +2,7 @@ package com.tencent.qqlive.streaming.util;
 
 import java.util.Map;
 
-public class Config {
+public class ConfigUtils {
 	public static String getString(Map conf, String key, String default_value) {
 		Object o = conf.get(key);
 		if (o != null) {
