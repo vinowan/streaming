@@ -89,6 +89,26 @@ public class Utils {
 		return url.substring(bIdx + 1, eIdx);
 	}
 	
+	public static String getKeyVid(String url) {
+		String ret = "no_url";
+		if (url.length() < 1)
+			return ret;
+		
+		int bIdx = url.indexOf("?");
+		if (bIdx == -1)
+			return ret;
+		
+		String[] params = url.substring(bIdx + 1).split("&");
+		for (String param : params) {
+			if (param.startsWith("vid=")) {
+				ret = param.substring(4);
+				break;
+			}
+		}
+		
+		return ret;
+	}
+	
 	public static String getURLVKey(String url) {
 		int eIdx = url.indexOf("?");
 		if (eIdx == -1)
@@ -115,6 +135,6 @@ public class Utils {
 	}
 	
 	public static void main(String[] args) {
-		System.out.println(getHostByUrl("file://a.b.c.d"));
+		System.out.println(getKeyVid("http://vv.video.qq.com/getbkey?vid=u0012c6lnnu&format=10202&idx=1%7C2%7C3%7C4%7C5%7C6%7C7%7C8%7C9%7C&platform=4&otype=json&callback=a&callvar=&charge=0&g_tk=&qq=&appver=2.1.0.3280&sysver=ios5.0.1&device=iPhone&modify_time=&lang=zh_CN"));
 	}
 }

@@ -18,6 +18,7 @@ public class SegmentRule {
 		public static final int OPERATION_TYPE_GET_DEVICE = 5; //取得设备
 		public static final int OPERATION_TYPE_GET_NONE = 6; //使用原值
 		public static final int OPERATION_TYPE_GET_URL = 7; //从携带vkey的URL中去掉vkey
+		public static final int OPERATION_TYPE_GET_KEY_VID = 8; //从URL中的参数中解析key为vid的值
 		
 		private String itemName = null;
 		private int operation = OPERATION_TYPE_GET_NONE;
@@ -81,6 +82,9 @@ public class SegmentRule {
 			case OPERATION_TYPE_GET_DEVICE :
 			case OPERATION_TYPE_GET_NONE :
 				sResult = value;
+				break;
+			case OPERATION_TYPE_GET_KEY_VID :
+				sResult = Utils.getKeyVid(value);
 				break;
 			}
 			

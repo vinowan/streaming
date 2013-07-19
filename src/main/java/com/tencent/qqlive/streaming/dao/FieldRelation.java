@@ -79,7 +79,7 @@ public class FieldRelation {
 			result = Utils.getHostByUrl(value);
 			break;
 		case PROC_OPERATOR_GET_VID:
-			result = Utils.getProgVid(value);
+			result = Utils.getKeyVid(value);
 			break;
 		default:
 			result = value;
