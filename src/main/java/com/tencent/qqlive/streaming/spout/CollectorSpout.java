@@ -279,9 +279,12 @@ public class CollectorSpout implements IRichSpout {
 		
 		String body = new String(event.getBody());
 		String[] items = body.split("\\s+");
+		if (items.length < 2)
+			return null;
+		
 		String timestamp = items[0] + " " + items[1];
 		SimpleDateFormat formatter = new SimpleDateFormat(
-				"yyyy-MM-dd HH:mm:ss.S");
+				"yyyy-MM-dd HH:mm:ss");
 		Date date = null;
 		try {
 			date = formatter.parse(timestamp);

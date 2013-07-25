@@ -145,4 +145,27 @@ public class WarningConfigDao {
 		
 		return result;
 	}
+	
+	public HashMap<String, String> getVersionPlatformMap() throws SQLException {
+		Statement statement = conn.createStatement();
+		
+		String sql = "select a.f_ver, b.f_desc " +
+				"from d_real_time_statis_conf.t_comm_app_ver as a left join d_real_time_statis_conf.t_dev_desc as b on a.f_dev_type = b.f_id";
+		logger.info("execute Query: " + sql);
+		
+		ResultSet rs = statement.executeQuery(sql);
+		
+		HashMap<String, String> ret = new HashMap<String, String>();
+		while(rs.next()) {
+			String version = rs.getString(1);
+			String platform = rs.getString(2);
+			
+			if (version.equals("") || platform.equals(""))
+				continue;
+			
+			ret.put(version, platform);
+		}
+		
+		return ret;
+	}
 }

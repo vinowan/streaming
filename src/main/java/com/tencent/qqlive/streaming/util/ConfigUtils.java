@@ -1,8 +1,13 @@
 package com.tencent.qqlive.streaming.util;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class ConfigUtils {
+	public static AtomicReference<HashMap<String, String>> verToPltRef 
+		= new AtomicReference<HashMap<String, String>>();
+	
 	public static String getString(Map conf, String key, String default_value) {
 		Object o = conf.get(key);
 		if (o != null) {

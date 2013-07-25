@@ -109,7 +109,9 @@ public class ComputeBolt implements IRichBolt {
 				Connection conn = dbc.getConn();
 
 				WarningConfigDao wcd = new WarningConfigDao(conn);
-
+				
+				ConfigUtils.verToPltRef.set(wcd.getVersionPlatformMap());
+				
 				List<String> statsFile = wcd.getAllStatsFiles();
 				for (String file : statsFile) {
 					FileRule fr = wcd.getRuleForFile(file);

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.tencent.qqlive.streaming.util.ConfigUtils;
 import com.tencent.qqlive.streaming.util.IPInfo;
 import com.tencent.qqlive.streaming.util.IPInfo.IPBlockInfo;
 import com.tencent.qqlive.streaming.util.Utils;
@@ -19,6 +20,7 @@ public class SegmentRule {
 		public static final int OPERATION_TYPE_GET_NONE = 6; //使用原值
 		public static final int OPERATION_TYPE_GET_URL = 7; //从携带vkey的URL中去掉vkey
 		public static final int OPERATION_TYPE_GET_KEY_VID = 8; //从URL中的参数中解析key为vid的值
+		public static final int OPERATION_TYPE_GET_PLATFORM = 9; //获取平台，比如android、ios
 		
 		private String itemName = null;
 		private int operation = OPERATION_TYPE_GET_NONE;
@@ -43,7 +45,7 @@ public class SegmentRule {
 			this.dimension = dimension;
 		}
 		
-		String getValue(String value) {
+		public String getValue(String value) {
 			String sResult = "";
 			IPBlockInfo blockInfo = null;
 			switch(operation)
@@ -51,10 +53,10 @@ public class SegmentRule {
 			case OPERATION_TYPE_GET_PROV :
 				blockInfo = IPInfo.getInstance().getIPBlock(value);
 				if (blockInfo == null) {
-					sResult = "未知";
+					sResult = "unknow";
 				} else {
 					if (blockInfo.province == null)
-						sResult = "未知";
+						sResult = "unknow";
 					else
 						sResult = blockInfo.province;
 				}
@@ -86,6 +88,11 @@ public class SegmentRule {
 			case OPERATION_TYPE_GET_KEY_VID :
 				sResult = Utils.getKeyVid(value);
 				break;
+			case OPERATION_TYPE_GET_PLATFORM :
+				sResult = ConfigUtils.verToPltRef.get().get(value);
+				if (sResult == null)
+					sResult = "unknow";
+				return sResult;
 			}
 			
 			try {
